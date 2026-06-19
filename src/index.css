@@ -1,4 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+/* Tokens do design system expostos como utilities do Tailwind v4 */
+@theme {
+  --color-neon-blue: #2563eb;
+  --color-neon-purple: #7c3aed;
+  --color-gold: #d97706;
+  --color-op-red: #e11d48;
+  --color-op-green: #059669;
+  --color-op-blue: #2563eb;
+  --color-op-purple: #7c3aed;
+  --color-op-yellow: #d97706;
+  --color-op-black: #334155;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Outfit', 'Inter', system-ui, sans-serif;
+}
 
 :root {
   /* Cores Base HSL do Tema Clean Premium (SaaS Modern) */
@@ -631,6 +647,38 @@ a:hover {
   .type-leader:hover .op-card-wrapper {
     border-color: var(--gold);
     box-shadow: 0 12px 24px rgba(217, 119, 6, 0.12), var(--gold-glow);
+  }
+}
+
+/* P0.1a — Garante que a imagem da carta sempre preencha a célula (cinto-e-suspensório
+   independente das utilities do Tailwind). Wrapper já é ratio 2.5/3.5 = ratio da carta. */
+.op-card-wrapper img,
+.op-card-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* P0.1b — Overlay do modal robusto (position:fixed garantido mesmo sem Tailwind) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 0;
+  background: rgba(15, 23, 42, 0.6);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+@media (min-width: 768px) {
+  .modal-overlay {
+    align-items: center;
+    padding: 1rem;
   }
 }
 

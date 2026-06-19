@@ -17,8 +17,8 @@ export default function CardModal({ card, onClose, ligaPrices, loadingLiga }: Ca
   };
 
   return (
-    <div 
-      className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4 z-50 overflow-y-auto animate-fade-in"
+    <div
+      className="modal-overlay animate-fade-in"
       onClick={handleOverlayClick}
     >
       <div 
