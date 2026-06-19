@@ -1,4 +1,5 @@
 import type React from 'react';
+import { useEffect } from 'react';
 import { X, TrendingUp, ExternalLink } from 'lucide-react';
 import type { OPCard, LigaCardPrice } from '../types';
 
@@ -16,20 +17,37 @@ export default function CardModal({ card, onClose, ligaPrices, loadingLiga }: Ca
     }
   };
 
+  // P2.2 — Fecha com Esc e restaura o foco ao elemento anterior ao fechar
+  useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      previouslyFocused?.focus?.();
+    };
+  }, [onClose]);
+
   return (
     <div
       className="modal-overlay animate-fade-in"
       onClick={handleOverlayClick}
     >
-      <div 
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Ficha técnica: ${card.card_name}`}
         className="glass-panel w-full md:max-w-4xl overflow-hidden relative rounded-t-2xl md:rounded-2xl max-h-[95vh] md:max-h-none flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Barra de Fechar Superior (Mobile Only) */}
         <div className="flex md:hidden items-center justify-between px-4 py-3 bg-white border-b border-slate-100 sticky top-0 z-20">
           <span className="text-xs font-bold text-slate-500">Ficha Técnica</span>
-          <button 
+          <button
             onClick={onClose}
+            aria-label="Fechar"
             className="p-1 bg-slate-100 border border-slate-200 rounded-full text-slate-500 hover:bg-slate-200"
           >
             <X size={16} />
@@ -37,8 +55,9 @@ export default function CardModal({ card, onClose, ligaPrices, loadingLiga }: Ca
         </div>
 
         {/* Botão de Fechar Desktop */}
-        <button 
+        <button
           onClick={onClose}
+          aria-label="Fechar"
           className="hidden md:block absolute top-4 right-4 p-2 bg-slate-50 border border-slate-200 rounded-full text-slate-500 hover:bg-slate-100 transition-all z-20"
         >
           <X size={16} />
@@ -67,7 +86,7 @@ export default function CardModal({ card, onClose, ligaPrices, loadingLiga }: Ca
                   {card.rarity}
                 </span>
                 {card.attribute && card.attribute !== 'NULL' && (
-                  <span className="text-[9px] bg-slate-100 text-slate-600 border border-slate-150 px-2.5 py-0.5 rounded-full font-bold">
+                  <span className="text-[9px] bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-0.5 rounded-full font-bold">
                     {card.attribute}
                   </span>
                 )}
@@ -103,7 +122,7 @@ export default function CardModal({ card, onClose, ligaPrices, loadingLiga }: Ca
                   <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider mb-1">Categorias / Tags</p>
                   <div className="flex flex-wrap gap-1">
                     {card.sub_types.split('/').map((sub, i) => (
-                      <span key={i} className="inline-block px-2.5 py-0.5 bg-slate-50 border border-slate-150 rounded-full text-[10px] font-bold text-slate-600">
+                      <span key={i} className="inline-block px-2.5 py-0.5 bg-slate-50 border border-slate-200 rounded-full text-[10px] font-bold text-slate-600">
                         {sub.trim()}
                       </span>
                     ))}
@@ -114,7 +133,7 @@ export default function CardModal({ card, onClose, ligaPrices, loadingLiga }: Ca
               {card.card_text && card.card_text !== "NULL" && (
                 <div className="mb-6">
                   <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider mb-1.5">Efeito da Carta</p>
-                  <p className="text-xs bg-slate-50 border border-slate-100 p-3.5 rounded-lg text-slate-655 leading-relaxed max-h-[140px] overflow-y-auto scrollbar-thin">
+                  <p className="text-xs bg-slate-50 border border-slate-100 p-3.5 rounded-lg text-slate-600 leading-relaxed max-h-[140px] overflow-y-auto scrollbar-thin">
                     {card.card_text}
                   </p>
                 </div>

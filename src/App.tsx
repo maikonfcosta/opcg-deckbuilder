@@ -269,10 +269,10 @@ export default function App() {
       {/* Header Desktop (Oculto no Celular se visualização não for Builder) */}
       <header className="hidden-mobile bg-white/80 backdrop-blur-md border-b border-slate-200/80 h-16 items-center justify-between px-6 sticky top-0 z-30">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('dashboard')}>
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-purple-500 flex items-center justify-center font-bold text-black text-sm">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center font-bold text-white text-sm">
             ☠️
           </div>
-          <span className="font-extrabold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400">
+          <span className="font-extrabold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
             OPCG LAB
           </span>
         </div>
@@ -282,7 +282,7 @@ export default function App() {
             <button 
               onClick={() => setView('dashboard')}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                view === 'dashboard' ? 'bg-cyan-500/10 text-cyan-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+                view === 'dashboard' ? 'bg-blue-600/10 text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-800'
               }`}
             >
               <FolderHeart size={16} />
@@ -291,7 +291,7 @@ export default function App() {
             <button 
               onClick={() => setView('explorer')}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                view === 'explorer' ? 'bg-cyan-500/10 text-cyan-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+                view === 'explorer' ? 'bg-blue-600/10 text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-800'
               }`}
             >
               <Database size={16} />
@@ -300,7 +300,7 @@ export default function App() {
             <button 
               onClick={() => setView('settings')}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                view === 'settings' ? 'bg-cyan-500/10 text-cyan-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+                view === 'settings' ? 'bg-blue-600/10 text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-800'
               }`}
             >
               <SettingsIcon size={16} />
@@ -313,7 +313,7 @@ export default function App() {
       {/* Header Mobile Simplificado (Apenas Logo e Título, sem menu superior) */}
       {view !== 'builder' && (
         <header className="hidden-desktop bg-white/80 backdrop-blur-md border-b border-slate-200/80 h-14 items-center justify-center sticky top-0 z-30">
-          <span className="font-extrabold text-base tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 flex items-center gap-1.5">
+          <span className="font-extrabold text-base tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 flex items-center gap-1.5">
             ☠️ OPCG LAB
           </span>
         </header>

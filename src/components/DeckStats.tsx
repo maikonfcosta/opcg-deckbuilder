@@ -15,9 +15,9 @@ export default function DeckStats({ costCounts, typeCounts, counterCounts, total
 
   const renderCostTable = () => (
     <div className="glass-panel p-4 animate-fade-in">
-      <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
-        <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Curva de Custo (Don!!)</h5>
-        <span className="text-[10px] text-cyan-400 font-bold">Total: {totalCards} cartas</span>
+      <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+        <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Curva de Custo (Don!!)</h5>
+        <span className="text-[10px] text-blue-600 font-bold">Total: {totalCards} cartas</span>
       </div>
       <table className="stats-table">
         <thead>
@@ -33,8 +33,8 @@ export default function DeckStats({ costCounts, typeCounts, counterCounts, total
             const percentage = totalCards > 0 ? (count / totalCards) * 100 : 0;
             return (
               <tr key={cost}>
-                <td className="font-semibold text-slate-350">{cost}</td>
-                <td className="font-bold text-cyan-400">{count}</td>
+                <td className="font-semibold text-slate-600">{cost}</td>
+                <td className="font-bold text-blue-600">{count}</td>
                 <td className="w-3/5">
                   <div className="progress-bar-container">
                     <div className="progress-bar-fill" style={{ width: `${percentage}%` }} />
@@ -50,9 +50,9 @@ export default function DeckStats({ costCounts, typeCounts, counterCounts, total
 
   const renderTypeTable = () => (
     <div className="glass-panel p-4 animate-fade-in">
-      <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
-        <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tipos de Cartas</h5>
-        <span className="text-[10px] text-purple-400 font-bold">Total: {totalCards} cartas</span>
+      <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+        <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tipos de Cartas</h5>
+        <span className="text-[10px] text-purple-600 font-bold">Total: {totalCards} cartas</span>
       </div>
       <table className="stats-table">
         <thead>
@@ -68,8 +68,8 @@ export default function DeckStats({ costCounts, typeCounts, counterCounts, total
             const percentage = totalCards > 0 ? (count / totalCards) * 100 : 0;
             return (
               <tr key={type}>
-                <td className="font-semibold text-slate-350">{type}</td>
-                <td className="font-bold text-purple-400">{count}</td>
+                <td className="font-semibold text-slate-600">{type}</td>
+                <td className="font-bold text-purple-600">{count}</td>
                 <td className="w-3/5">
                   <div className="progress-bar-container">
                     <div className="progress-bar-fill purple" style={{ width: `${percentage}%` }} />
@@ -85,9 +85,9 @@ export default function DeckStats({ costCounts, typeCounts, counterCounts, total
 
   const renderCounterTable = () => (
     <div className="glass-panel p-4 animate-fade-in">
-      <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
-        <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Defesa (Counters)</h5>
-        <span className="text-[10px] text-amber-400 font-bold">Total: {totalCards} cartas</span>
+      <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+        <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Defesa (Counters)</h5>
+        <span className="text-[10px] text-amber-600 font-bold">Total: {totalCards} cartas</span>
       </div>
       <table className="stats-table">
         <thead>
@@ -104,8 +104,8 @@ export default function DeckStats({ costCounts, typeCounts, counterCounts, total
             const label = counter === '0' ? 'Sem Counter' : `+${counter}`;
             return (
               <tr key={counter}>
-                <td className="font-semibold text-slate-350">{label}</td>
-                <td className="font-bold text-amber-400">{count}</td>
+                <td className="font-semibold text-slate-600">{label}</td>
+                <td className="font-bold text-amber-600">{count}</td>
                 <td className="w-3/5">
                   <div className="progress-bar-container">
                     <div className="progress-bar-fill gold" style={{ width: `${percentage}%` }} />
@@ -122,13 +122,13 @@ export default function DeckStats({ costCounts, typeCounts, counterCounts, total
   return (
     <div className="space-y-4">
       {/* Abas Seletoras Mobile-Friendly */}
-      <div className="flex bg-slate-900/50 p-1 border border-slate-850 rounded-lg">
+      <div className="flex bg-slate-100 p-1 border border-slate-200 rounded-lg">
         <button 
           onClick={() => setActiveTab('cost')}
           className={`flex-1 py-1.5 rounded text-xs font-bold transition-all flex items-center justify-center gap-1 ${
-            activeTab === 'cost' 
-              ? 'bg-cyan-500 text-black shadow-md' 
-              : 'text-slate-400 hover:text-slate-200'
+            activeTab === 'cost'
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'text-slate-500 hover:text-slate-800'
           }`}
         >
           <BarChart2 size={12} /> Custo
@@ -136,9 +136,9 @@ export default function DeckStats({ costCounts, typeCounts, counterCounts, total
         <button 
           onClick={() => setActiveTab('type')}
           className={`flex-1 py-1.5 rounded text-xs font-bold transition-all flex items-center justify-center gap-1 ${
-            activeTab === 'type' 
-              ? 'bg-purple-500 text-white shadow-md' 
-              : 'text-slate-400 hover:text-slate-200'
+            activeTab === 'type'
+              ? 'bg-purple-600 text-white shadow-md'
+              : 'text-slate-500 hover:text-slate-800'
           }`}
         >
           <Award size={12} /> Tipos
@@ -146,9 +146,9 @@ export default function DeckStats({ costCounts, typeCounts, counterCounts, total
         <button 
           onClick={() => setActiveTab('counter')}
           className={`flex-1 py-1.5 rounded text-xs font-bold transition-all flex items-center justify-center gap-1 ${
-            activeTab === 'counter' 
-              ? 'bg-yellow-500 text-black shadow-md' 
-              : 'text-slate-400 hover:text-slate-200'
+            activeTab === 'counter'
+              ? 'bg-amber-500 text-white shadow-md'
+              : 'text-slate-500 hover:text-slate-800'
           }`}
         >
           <Shield size={12} /> Defesa

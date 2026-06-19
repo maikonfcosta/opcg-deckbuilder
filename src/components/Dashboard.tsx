@@ -42,7 +42,7 @@ export default function Dashboard({ decks, onCreateDeck, onEditDeck, onDeleteDec
       </div>
 
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-slate-300 border-l-2 border-cyan-500 pl-2.5">
+        <h2 className="text-xl font-bold text-slate-800 border-l-2 border-blue-600 pl-2.5">
           Meus Decks Salvos ({decks.length})
         </h2>
       </div>
@@ -95,6 +95,7 @@ export default function Dashboard({ decks, onCreateDeck, onEditDeck, onDeleteDec
                     onClick={(e) => onDeleteDeck(deck.id, e)}
                     className="p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded-md hover:bg-red-50 absolute top-5 right-5 z-20"
                     title="Excluir deck"
+                    aria-label={`Excluir deck ${deck.name}`}
                   >
                     <Trash2 size={15} />
                   </button>
@@ -103,8 +104,8 @@ export default function Dashboard({ decks, onCreateDeck, onEditDeck, onDeleteDec
                 <div className="flex items-center gap-2 mb-4">
                   {deck.leader ? (
                     <div className="flex items-center gap-2 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100 max-w-[180px]">
-                      <div className="w-6 h-8 rounded border border-yellow-500/40 overflow-hidden bg-slate-900 flex-shrink-0">
-                        <img src={deck.leader.card_image} alt="" className="w-full h-full object-cover" />
+                      <div className="w-6 h-8 rounded border border-amber-500/40 overflow-hidden bg-slate-100 flex-shrink-0">
+                        <img src={deck.leader.card_image} alt={deck.leader.card_name} className="w-full h-full object-cover" />
                       </div>
                       <span className="text-[10px] font-bold text-slate-700 truncate">{deck.leader.card_name}</span>
                     </div>

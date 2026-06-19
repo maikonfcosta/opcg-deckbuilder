@@ -40,7 +40,7 @@ function CardImage({ src, alt }: { src: string; alt: string }) {
         alt={alt} 
         onLoad={() => setLoaded(true)}
         loading="lazy"
-        className={`w-full h-full object-cover transition-opacity duration-355 ${
+        className={`w-full h-full object-cover transition-opacity duration-300 ${
           loaded ? 'opacity-100 z-0' : 'opacity-0'
         }`}
       />
@@ -254,7 +254,7 @@ export default function DeckBuilder({
       <div className="flex-1 overflow-y-auto p-3">
         {loadingCards ? (
           <div className="text-center py-16">
-            <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+            <div className="w-8 h-8 border-[3px] border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
             <p className="text-xs text-slate-500">Carregando cartas...</p>
           </div>
         ) : (
@@ -282,23 +282,24 @@ export default function DeckBuilder({
                         <span className={`color-badge ${card.card_color.toLowerCase()}`} />
                       </div>
 
-                      <CardImage src={card.card_image} alt="" />
+                      <CardImage src={card.card_image} alt={card.card_name} />
 
-                      <button 
+                      <button
                         onClick={() => onOpenCardModal(card)}
-                        className="absolute top-1.5 right-1.5 p-1 bg-white/80 border border-slate-200 hover:bg-blue-600 hover:text-white transition-colors rounded-full z-15 opacity-0 group-hover/card:opacity-100"
+                        aria-label={`Ver detalhes de ${card.card_name}`}
+                        className="absolute top-1.5 right-1.5 p-1 bg-white/80 border border-slate-200 hover:bg-blue-600 hover:text-white transition-colors rounded-full z-20 opacity-0 group-hover/card:opacity-100"
                       >
                         <Info size={10} />
                       </button>
 
                       {countInDeck > 0 && !isLeader && (
-                        <div className="absolute left-1.5 bottom-1.5 px-1.5 py-0.5 bg-blue-600 text-white font-extrabold text-[9px] rounded shadow-md z-15">
+                        <div className="absolute left-1.5 bottom-1.5 px-1.5 py-0.5 bg-blue-600 text-white font-extrabold text-[9px] rounded shadow-md z-20">
                           {countInDeck}x
                         </div>
                       )}
 
                       {isCurrentLeader && (
-                        <div className="absolute left-1.5 bottom-1.5 px-1.5 py-0.5 bg-amber-500/90 text-white font-extrabold text-[9px] rounded shadow-md z-15">
+                        <div className="absolute left-1.5 bottom-1.5 px-1.5 py-0.5 bg-amber-500/90 text-white font-extrabold text-[9px] rounded shadow-md z-20">
                           Líder
                         </div>
                       )}
@@ -359,7 +360,7 @@ export default function DeckBuilder({
           <p className="text-xs font-bold text-red-700 mb-1 flex items-center gap-1.5">
             <AlertTriangle size={13} /> Regras Violadas:
           </p>
-          <ul className="list-disc pl-4 text-[10px] text-red-650 space-y-1">
+          <ul className="list-disc pl-4 text-[10px] text-red-600 space-y-1">
             {deckValidation.errors.map((err, i) => (
               <li key={i}>{err}</li>
             ))}
@@ -376,7 +377,7 @@ export default function DeckBuilder({
             className="glass-panel p-3 flex items-center gap-3 border-amber-500/20 hover:border-amber-500/40 cursor-pointer transition-colors"
           >
             <div className="w-9 h-12 rounded border border-amber-500/30 overflow-hidden bg-slate-100 flex-shrink-0">
-              <img src={currentDeck.leader.card_image} alt="" className="w-full h-full object-cover" />
+              <img src={currentDeck.leader.card_image} alt={currentDeck.leader.card_name} className="w-full h-full object-cover" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-slate-800 truncate">{currentDeck.leader.card_name}</p>
@@ -412,7 +413,7 @@ export default function DeckBuilder({
                   onClick={() => onOpenCardModal(entry.card)}
                 >
                   <div className="w-8 h-11 rounded border border-slate-100 overflow-hidden bg-slate-50 flex-shrink-0">
-                    <img src={entry.card.card_image} alt="" className="w-full h-full object-cover" />
+                    <img src={entry.card.card_image} alt={entry.card.card_name} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-slate-800 truncate">{entry.card.card_name}</p>
@@ -424,8 +425,9 @@ export default function DeckBuilder({
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <button 
+                  <button
                     onClick={() => onRemoveCard(entry.card.card_set_id)}
+                    aria-label={`Remover uma cópia de ${entry.card.card_name}`}
                     className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-slate-800"
                   >
                     <Minus size={11} />
@@ -433,9 +435,10 @@ export default function DeckBuilder({
                   <span className="text-xs font-bold text-blue-600 min-w-4 text-center">
                     {entry.count}
                   </span>
-                  <button 
+                  <button
                     onClick={() => onAddCard(entry.card)}
                     disabled={entry.count >= 4 || totalMainCards >= 50}
+                    aria-label={`Adicionar uma cópia de ${entry.card.card_name}`}
                     className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-slate-800 disabled:opacity-20"
                   >
                     <Plus size={11} />
@@ -524,7 +527,7 @@ export default function DeckBuilder({
               <CheckCircle size={10} /> Válido
             </span>
           ) : (
-            <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 bg-red-50 text-red-750 text-[10px] font-bold rounded-full border border-red-200">
+            <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 bg-red-50 text-red-700 text-[10px] font-bold rounded-full border border-red-200">
               <AlertTriangle size={10} /> Inválido
             </span>
           )}

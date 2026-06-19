@@ -192,7 +192,7 @@ export default function CardExplorer({ allCards, loadingCards, errorCards, onOpe
       {/* Grid de Cartas */}
       {loadingCards ? (
         <div className="text-center py-20 animate-fade-in">
-          <div className="w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <div className="w-10 h-10 border-[3px] border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
           <p className="text-xs text-slate-500 font-medium">Buscando banco de cartas...</p>
         </div>
       ) : errorCards ? (
