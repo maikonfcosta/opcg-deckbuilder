@@ -1,0 +1,371 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  FolderHeart, Database, Settings as SettingsIcon
+} from 'lucide-react';
+
+import { fetchAllCards, fetchLigaPrices } from './services/api';
+import { analyzeDeckWithGemini } from './services/gemini';
+import type { OPCard, Deck, AppSettings, LigaCardPrice } from './types';
+
+// Componentes Modulares Refatorados
+import Dashboard from './components/Dashboard';
+import CardExplorer from './components/CardExplorer';
+import DeckBuilder from './components/DeckBuilder';
+import Settings from './components/Settings';
+import CardModal from './components/CardModal';
+
+// Utilitário para gerar ID único
+const generateId = () => Math.random().toString(36).substring(2, 9);
+
+export default function App() {
+  // --- Estados Globais ---
+  const [view, setView] = useState<'dashboard' | 'explorer' | 'builder' | 'settings'>('dashboard');
+  const [allCards, setAllCards] = useState<OPCard[]>([]);
+  const [loadingCards, setLoadingCards] = useState<boolean>(true);
+  const [errorCards, setErrorCards] = useState<string | null>(null);
+  
+  const [decks, setDecks] = useState<Deck[]>(() => {
+    const saved = localStorage.getItem('opcg_decks');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return [];
+  });
+  const [currentDeck, setCurrentDeck] = useState<Deck>({
+    id: '',
+    name: 'Novo Deck',
+    leader: null,
+    cards: {},
+    createdAt: '',
+    updatedAt: ''
+  });
+  
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    const saved = localStorage.getItem('opcg_settings');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return { geminiApiKey: '' };
+  });
+
+  // Estados da IA
+  const [loadingAnalysis, setLoadingAnalysis] = useState<boolean>(false);
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+
+  // Estados do Modal
+  const [selectedCard, setSelectedCard] = useState<OPCard | null>(null);
+  const [ligaPrices, setLigaPrices] = useState<LigaCardPrice | null>(null);
+  const [loadingLiga, setLoadingLiga] = useState<boolean>(false);
+
+  // --- Efeitos ---
+  // Carrega o banco de cartas principal
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoadingCards(true);
+        const data = await fetchAllCards();
+        setAllCards(data);
+        setErrorCards(null);
+      } catch (err) {
+        console.error(err);
+        setErrorCards('Falha ao conectar com a OPTCG API. Por favor, tente novamente mais tarde.');
+      } finally {
+        setLoadingCards(false);
+      }
+    }
+    loadData();
+  }, []);
+
+
+
+  // --- Ações de Armazenamento ---
+  const saveDecks = (updatedDecks: Deck[]) => {
+    setDecks(updatedDecks);
+    localStorage.setItem('opcg_decks', JSON.stringify(updatedDecks));
+  };
+
+  const handleSaveSettings = (newApiKey: string) => {
+    const updated = { geminiApiKey: newApiKey };
+    setSettings(updated);
+    localStorage.setItem('opcg_settings', JSON.stringify(updated));
+  };
+
+  // --- Lógica de Deck Builder ---
+  const handleCreateDeck = () => {
+    const newDeck: Deck = {
+      id: generateId(),
+      name: 'Novo Deck',
+      leader: null,
+      cards: {},
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    setCurrentDeck(newDeck);
+    setAnalysisResult(null);
+    setAnalysisError(null);
+    setView('builder');
+  };
+
+  const handleEditDeck = (deck: Deck) => {
+    setCurrentDeck({ ...deck });
+    setAnalysisResult(null);
+    setAnalysisError(null);
+    setView('builder');
+  };
+
+  const handleDeleteDeck = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('Deseja realmente excluir este deck?')) {
+      const updated = decks.filter(d => d.id !== id);
+      saveDecks(updated);
+    }
+  };
+
+  const handleSaveCurrentDeck = () => {
+    const now = new Date().toISOString();
+    const updatedDeck = {
+      ...currentDeck,
+      updatedAt: now
+    };
+
+    let updatedDecks: Deck[];
+    if (decks.some(d => d.id === currentDeck.id)) {
+      updatedDecks = decks.map(d => (d.id === currentDeck.id ? updatedDeck : d));
+    } else {
+      updatedDecks = [...decks, updatedDeck];
+    }
+
+    saveDecks(updatedDecks);
+    setCurrentDeck(updatedDeck);
+    alert('Deck salvo localmente!');
+    setView('dashboard');
+  };
+
+  // --- Modificações do Deck (Passadas por callback) ---
+  const handleSelectLeader = (card: OPCard) => {
+    setCurrentDeck(prev => ({ ...prev, leader: card }));
+  };
+
+  const handleAddCard = (card: OPCard) => {
+    setCurrentDeck(prev => {
+      const updated = { ...prev.cards };
+      const currentCount = updated[card.card_set_id]?.count || 0;
+      updated[card.card_set_id] = { card, count: currentCount + 1 };
+      return { ...prev, cards: updated };
+    });
+  };
+
+  const handleRemoveCard = (cardId: string) => {
+    setCurrentDeck(prev => {
+      const updated = { ...prev.cards };
+      if (!updated[cardId]) return prev;
+      if (updated[cardId].count > 1) {
+        updated[cardId] = { ...updated[cardId], count: updated[cardId].count - 1 };
+      } else {
+        delete updated[cardId];
+      }
+      return { ...prev, cards: updated };
+    });
+  };
+
+  const handleRenameDeck = (newName: string) => {
+    setCurrentDeck(prev => ({ ...prev, name: newName }));
+  };
+
+  // --- Chamadas Extras e IA ---
+  const handleOpenCardModal = async (card: OPCard) => {
+    setSelectedCard(card);
+    setLigaPrices(null);
+    setLoadingLiga(true);
+    try {
+      const prices = await fetchLigaPrices(card.card_set_id);
+      setLigaPrices(prices);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingLiga(false);
+    }
+  };
+
+  const handleStartAnalysis = async () => {
+    setLoadingAnalysis(true);
+    setAnalysisResult(null);
+    setAnalysisError(null);
+    try {
+      const report = await analyzeDeckWithGemini(currentDeck, settings.geminiApiKey);
+      setAnalysisResult(report);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro de conexão com o Gemini.';
+      setAnalysisError(message);
+    } finally {
+      setLoadingAnalysis(false);
+    }
+  };
+
+  // --- Renderização Dinâmica de Telas ---
+  const renderView = () => {
+    switch (view) {
+      case 'dashboard':
+        return (
+          <Dashboard 
+            decks={decks} 
+            onCreateDeck={handleCreateDeck} 
+            onEditDeck={handleEditDeck} 
+            onDeleteDeck={handleDeleteDeck}
+          />
+        );
+      case 'explorer':
+        return (
+          <CardExplorer 
+            allCards={allCards} 
+            loadingCards={loadingCards} 
+            errorCards={errorCards} 
+            onOpenCardModal={handleOpenCardModal}
+          />
+        );
+      case 'builder':
+        return (
+          <DeckBuilder 
+            currentDeck={currentDeck}
+            allCards={allCards}
+            loadingCards={loadingCards}
+            onSaveDeck={handleSaveCurrentDeck}
+            onCancel={() => setView('dashboard')}
+            onOpenCardModal={handleOpenCardModal}
+            onSelectLeader={handleSelectLeader}
+            onAddCard={handleAddCard}
+            onRemoveCard={handleRemoveCard}
+            onRenameDeck={handleRenameDeck}
+            loadingAnalysis={loadingAnalysis}
+            analysisResult={analysisResult}
+            analysisError={analysisError}
+            onStartAnalysis={handleStartAnalysis}
+            onClearAnalysis={() => { setAnalysisResult(null); setAnalysisError(null); }}
+          />
+        );
+      case 'settings':
+        return (
+          <Settings 
+            settings={settings} 
+            onSaveSettings={handleSaveSettings}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 pb-16 md:pb-0">
+      {/* Header Desktop (Oculto no Celular se visualização não for Builder) */}
+      <header className="hidden md:flex bg-slate-950/85 backdrop-blur-md border-b border-slate-900 h-16 items-center justify-between px-6 sticky top-0 z-30">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('dashboard')}>
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-purple-500 flex items-center justify-center font-bold text-black text-sm">
+            ☠️
+          </div>
+          <span className="font-extrabold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400">
+            OPCG LAB
+          </span>
+        </div>
+
+        {view !== 'builder' && (
+          <nav className="flex items-center gap-1">
+            <button 
+              onClick={() => setView('dashboard')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                view === 'dashboard' ? 'bg-cyan-500/10 text-cyan-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <FolderHeart size={16} />
+              Decks
+            </button>
+            <button 
+              onClick={() => setView('explorer')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                view === 'explorer' ? 'bg-cyan-500/10 text-cyan-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Database size={16} />
+              Cartas
+            </button>
+            <button 
+              onClick={() => setView('settings')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                view === 'settings' ? 'bg-cyan-500/10 text-cyan-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <SettingsIcon size={16} />
+              Ajustes
+            </button>
+          </nav>
+        )}
+      </header>
+
+      {/* Header Mobile Simplificado (Apenas Logo e Título, sem menu superior) */}
+      {view !== 'builder' && (
+        <header className="flex md:hidden bg-slate-950/90 backdrop-blur-md border-b border-slate-900 h-14 items-center justify-center sticky top-0 z-30">
+          <span className="font-extrabold text-base tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 flex items-center gap-1.5">
+            ☠️ OPCG LAB
+          </span>
+        </header>
+      )}
+
+      {/* Área de Visualização Principal */}
+      <main className="flex-1 flex flex-col">
+        {renderView()}
+      </main>
+
+      {/* Barra de Navegação Inferior (Mobile-Only, Oculta na tela do Builder) */}
+      {view !== 'builder' && (
+        <nav className="flex md:hidden fixed bottom-0 left-0 right-0 h-16 bg-slate-950/95 backdrop-blur-md border-t border-slate-900 justify-around items-center z-30 px-2 shadow-2xl">
+          <button 
+            onClick={() => setView('dashboard')}
+            className={`flex flex-col items-center justify-center gap-1 py-1 w-16 transition-colors ${
+              view === 'dashboard' ? 'text-cyan-400' : 'text-slate-500'
+            }`}
+          >
+            <FolderHeart size={18} />
+            <span className="text-[9px] font-bold">Decks</span>
+          </button>
+          <button 
+            onClick={() => setView('explorer')}
+            className={`flex flex-col items-center justify-center gap-1 py-1 w-16 transition-colors ${
+              view === 'explorer' ? 'text-cyan-400' : 'text-slate-500'
+            }`}
+          >
+            <Database size={18} />
+            <span className="text-[9px] font-bold">Cartas</span>
+          </button>
+          <button 
+            onClick={() => setView('settings')}
+            className={`flex flex-col items-center justify-center gap-1 py-1 w-16 transition-colors ${
+              view === 'settings' ? 'text-cyan-400' : 'text-slate-500'
+            }`}
+          >
+            <SettingsIcon size={18} />
+            <span className="text-[9px] font-bold">Ajustes</span>
+          </button>
+        </nav>
+      )}
+
+      {/* Modal Global de Carta */}
+      {selectedCard && (
+        <CardModal 
+          card={selectedCard}
+          onClose={() => { setSelectedCard(null); setLigaPrices(null); }}
+          ligaPrices={ligaPrices}
+          loadingLiga={loadingLiga}
+        />
+      )}
+    </div>
+  );
+}
