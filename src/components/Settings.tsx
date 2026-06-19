@@ -19,7 +19,7 @@ export default function Settings({ settings, onSaveSettings }: SettingsProps) {
   };
 
   return (
-    <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-8 animate-fade-in">
+    <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-8 sm:px-6 md:py-10 animate-fade-in pb-24">
       <div className="mb-8 text-center md:text-left">
         <h1 className="text-4xl font-extrabold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
           Ajustes da IA

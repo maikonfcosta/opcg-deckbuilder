@@ -233,7 +233,7 @@ export default function DeckBuilder({
   const renderCardSelectionSection = () => (
     <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/50">
       {/* Filtros Rápidos */}
-      <div className="p-3 bg-white/95 border-b border-slate-200/80 flex flex-wrap gap-2 sticky top-0 z-10">
+      <div className="p-4 bg-white/95 border-b border-slate-200/80 flex flex-wrap gap-2.5 sticky top-0 z-10">
         <div className="flex-1 min-w-[140px] relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
           <input 
@@ -289,7 +289,7 @@ export default function DeckBuilder({
       </div>
 
       {/* Grid de Cartas com Skeletons e Overlays */}
-      <div className="flex-1 overflow-y-auto p-3">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-5">
         {loadingCards ? (
           <div className="text-center py-16">
             <div className="w-8 h-8 border-[3px] border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>

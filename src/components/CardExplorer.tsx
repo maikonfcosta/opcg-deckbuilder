@@ -83,7 +83,7 @@ export default function CardExplorer({ allCards, loadingCards, errorCards, onOpe
   }, [filteredCards, visibleCount]);
 
   return (
-    <div className="flex-1 max-w-7xl w-full mx-auto px-3 py-6 md:px-4 md:py-8 animate-fade-in pb-20">
+    <div className="flex-1 max-w-7xl w-full mx-auto px-4 py-6 sm:px-6 md:px-8 md:py-8 animate-fade-in pb-24">
       <div className="mb-6 text-center md:text-left">
         <h1 className="text-3xl md:text-4xl font-extrabold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-700">
           Banco de Cartas

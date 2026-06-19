@@ -20,7 +20,7 @@ export default function Dashboard({ decks, onCreateDeck, onEditDeck, onDeleteDec
   };
 
   return (
-    <div className="flex-1 max-w-7xl w-full mx-auto px-4 py-8 animate-fade-in pb-20">
+    <div className="flex-1 max-w-7xl w-full mx-auto px-4 py-8 sm:px-6 md:px-8 animate-fade-in pb-24">
       
       {/* Seção Hero Estilizada (Clean Premium Hero) */}
       <div className="relative overflow-hidden glass-panel p-6 md:p-10 mb-10 flex flex-col md:flex-row items-center justify-between gap-6 bg-gradient-to-br from-blue-50/50 via-white to-slate-50">
