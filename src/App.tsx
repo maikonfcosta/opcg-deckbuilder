@@ -265,9 +265,9 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 pb-16 md:pb-0">
+    <div className="flex flex-col min-h-screen pb-16 md:pb-0">
       {/* Header Desktop (Oculto no Celular se visualização não for Builder) */}
-      <header className="hidden md:flex bg-slate-950/85 backdrop-blur-md border-b border-slate-900 h-16 items-center justify-between px-6 sticky top-0 z-30">
+      <header className="hidden-mobile bg-white/80 backdrop-blur-md border-b border-slate-200/80 h-16 items-center justify-between px-6 sticky top-0 z-30">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('dashboard')}>
           <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-purple-500 flex items-center justify-center font-bold text-black text-sm">
             ☠️
@@ -312,7 +312,7 @@ export default function App() {
 
       {/* Header Mobile Simplificado (Apenas Logo e Título, sem menu superior) */}
       {view !== 'builder' && (
-        <header className="flex md:hidden bg-slate-950/90 backdrop-blur-md border-b border-slate-900 h-14 items-center justify-center sticky top-0 z-30">
+        <header className="hidden-desktop bg-white/80 backdrop-blur-md border-b border-slate-200/80 h-14 items-center justify-center sticky top-0 z-30">
           <span className="font-extrabold text-base tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 flex items-center gap-1.5">
             ☠️ OPCG LAB
           </span>
@@ -326,33 +326,27 @@ export default function App() {
 
       {/* Barra de Navegação Inferior (Mobile-Only, Oculta na tela do Builder) */}
       {view !== 'builder' && (
-        <nav className="flex md:hidden fixed bottom-0 left-0 right-0 h-16 bg-slate-950/95 backdrop-blur-md border-t border-slate-900 justify-around items-center z-30 px-2 shadow-2xl">
+        <nav className="bottom-nav md:hidden">
           <button 
             onClick={() => setView('dashboard')}
-            className={`flex flex-col items-center justify-center gap-1 py-1 w-16 transition-colors ${
-              view === 'dashboard' ? 'text-cyan-400' : 'text-slate-500'
-            }`}
+            className={`bottom-nav-item ${view === 'dashboard' ? 'active' : ''}`}
           >
             <FolderHeart size={18} />
-            <span className="text-[9px] font-bold">Decks</span>
+            <span>Decks</span>
           </button>
           <button 
             onClick={() => setView('explorer')}
-            className={`flex flex-col items-center justify-center gap-1 py-1 w-16 transition-colors ${
-              view === 'explorer' ? 'text-cyan-400' : 'text-slate-500'
-            }`}
+            className={`bottom-nav-item ${view === 'explorer' ? 'active' : ''}`}
           >
             <Database size={18} />
-            <span className="text-[9px] font-bold">Cartas</span>
+            <span>Cartas</span>
           </button>
           <button 
             onClick={() => setView('settings')}
-            className={`flex flex-col items-center justify-center gap-1 py-1 w-16 transition-colors ${
-              view === 'settings' ? 'text-cyan-400' : 'text-slate-500'
-            }`}
+            className={`bottom-nav-item ${view === 'settings' ? 'active' : ''}`}
           >
             <SettingsIcon size={18} />
-            <span className="text-[9px] font-bold">Ajustes</span>
+            <span>Ajustes</span>
           </button>
         </nav>
       )}

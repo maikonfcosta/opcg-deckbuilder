@@ -9,6 +9,26 @@ interface CardExplorerProps {
   onOpenCardModal: (card: OPCard) => void;
 }
 
+// Subcomponente de Imagem com Skeleton Loader integrado
+function CardImage({ src, alt }: { src: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div className="relative w-full h-full bg-slate-100" key={src}>
+      {!loaded && <div className="skeleton-card absolute inset-0 z-10" />}
+      <img 
+        src={src} 
+        alt={alt} 
+        onLoad={() => setLoaded(true)}
+        loading="lazy"
+        className={`w-full h-full object-cover transition-opacity duration-300 ${
+          loaded ? 'opacity-100 z-0' : 'opacity-0'
+        }`}
+      />
+    </div>
+  );
+}
+
 export default function CardExplorer({ allCards, loadingCards, errorCards, onOpenCardModal }: CardExplorerProps) {
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,7 +38,10 @@ export default function CardExplorer({ allCards, loadingCards, errorCards, onOpe
   const [filterRarity, setFilterRarity] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Filtragem local eficiente
+  // Paginação inteligente (Carregamento Incremental)
+  const [visibleCount, setVisibleCount] = useState(60);
+
+  // Filtragem local
   const filteredCards = useMemo(() => {
     return allCards.filter(card => {
       const matchesSearch = card.card_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -50,64 +73,69 @@ export default function CardExplorer({ allCards, loadingCards, errorCards, onOpe
     });
   }, [allCards, searchTerm, filterColor, filterType, filterCost, filterRarity]);
 
+  // Seção visível paginada
+  const visibleCards = useMemo(() => {
+    return filteredCards.slice(0, visibleCount);
+  }, [filteredCards, visibleCount]);
+
   return (
-    <div className="flex-1 max-w-7xl w-full mx-auto px-4 py-8 animate-fade-in">
-      <div className="mb-8 text-center md:text-left">
-        <h1 className="text-4xl font-extrabold mb-1.5 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400">
+    <div className="flex-1 max-w-7xl w-full mx-auto px-3 py-6 md:px-4 md:py-8 animate-fade-in pb-20">
+      <div className="mb-6 text-center md:text-left">
+        <h1 className="text-3xl md:text-4xl font-extrabold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-700">
           Banco de Cartas
         </h1>
-        <p className="text-sm text-slate-400">Explore o banco de dados oficial e confira informações táticas.</p>
+        <p className="text-xs md:text-sm text-slate-500 font-medium">Explore e consulte detalhes e preços em tempo real.</p>
       </div>
 
-      {/* Barra de Pesquisa Principal */}
-      <div className="flex gap-2 mb-6">
+      {/* Barra de Busca */}
+      <div className="flex gap-2 mb-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
           <input 
             type="text" 
-            placeholder="Nome, ID (OP01-001), efeito ou subtipo..." 
+            placeholder="Buscar por nome, ID, efeito..." 
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="form-input pl-10"
+            onChange={(e) => { setSearchTerm(e.target.value); setVisibleCount(60); }}
+            className="form-input pl-9 text-xs py-2 md:text-sm"
           />
         </div>
         <button 
           onClick={() => setShowFilters(!showFilters)}
-          className={`btn ${showFilters ? 'btn-primary' : 'btn-secondary'} px-3`}
+          className={`btn ${showFilters ? 'btn-primary' : 'btn-secondary'} px-3 py-2`}
           title="Filtros avançados"
         >
-          <SlidersHorizontal size={18} />
+          <SlidersHorizontal size={16} />
         </button>
       </div>
 
-      {/* Painel de Filtros Deslizante/Sanfona */}
+      {/* Filtros Extras */}
       {showFilters && (
-        <div className="glass-panel p-5 mb-6 grid grid-cols-2 md:grid-cols-4 gap-4 animate-slide-up">
+        <div className="glass-panel p-4 mb-4 grid grid-cols-2 md:grid-cols-4 gap-3 animate-slide-up">
           <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Cor</label>
+            <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Cor</label>
             <select 
               value={filterColor} 
-              onChange={(e) => setFilterColor(e.target.value)}
-              className="form-select text-xs py-2"
+              onChange={(e) => { setFilterColor(e.target.value); setVisibleCount(60); }}
+              className="form-select text-[11px] py-1.5"
             >
-              <option value="All">Todas as Cores</option>
-              <option value="Red">Red (Vermelho)</option>
-              <option value="Blue">Blue (Azul)</option>
-              <option value="Green">Green (Verde)</option>
-              <option value="Yellow">Yellow (Amarelo)</option>
-              <option value="Black">Black (Preto)</option>
-              <option value="Purple">Purple (Roxo)</option>
+              <option value="All">Todas</option>
+              <option value="Red">Red</option>
+              <option value="Blue">Blue</option>
+              <option value="Green">Green</option>
+              <option value="Yellow">Yellow</option>
+              <option value="Black">Black</option>
+              <option value="Purple">Purple</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Tipo</label>
+            <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tipo</label>
             <select 
               value={filterType} 
-              onChange={(e) => setFilterType(e.target.value)}
-              className="form-select text-xs py-2"
+              onChange={(e) => { setFilterType(e.target.value); setVisibleCount(60); }}
+              className="form-select text-[11px] py-1.5"
             >
-              <option value="All">Todos os Tipos</option>
+              <option value="All">Todos</option>
               <option value="Leader">Leader</option>
               <option value="Character">Character</option>
               <option value="Event">Event</option>
@@ -116,11 +144,11 @@ export default function CardExplorer({ allCards, loadingCards, errorCards, onOpe
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Custo</label>
+            <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Custo</label>
             <select 
               value={filterCost} 
-              onChange={(e) => setFilterCost(e.target.value)}
-              className="form-select text-xs py-2"
+              onChange={(e) => { setFilterCost(e.target.value); setVisibleCount(60); }}
+              className="form-select text-[11px] py-1.5"
             >
               <option value="All">Todos</option>
               <option value="0">0</option>
@@ -138,11 +166,11 @@ export default function CardExplorer({ allCards, loadingCards, errorCards, onOpe
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Raridade</label>
+            <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Raridade</label>
             <select 
               value={filterRarity} 
-              onChange={(e) => setFilterRarity(e.target.value)}
-              className="form-select text-xs py-2"
+              onChange={(e) => { setFilterRarity(e.target.value); setVisibleCount(60); }}
+              className="form-select text-[11px] py-1.5"
             >
               <option value="All">Todas</option>
               <option value="L">Leader</option>
@@ -156,61 +184,80 @@ export default function CardExplorer({ allCards, loadingCards, errorCards, onOpe
         </div>
       )}
 
-      {/* Resultados de Contador */}
-      <p className="text-xs text-slate-500 mb-4 text-right">
-        Cartas encontradas: <strong className="text-cyan-400 font-bold">{filteredCards.length}</strong>
-      </p>
+      {/* Estatísticas de Resultados */}
+      <div className="flex justify-between items-center text-[10px] text-slate-500 mb-3 px-1">
+        <span>Mostrando {visibleCards.length} de {filteredCards.length} cartas</span>
+      </div>
 
-      {/* Feedback de Loading / Erros */}
+      {/* Grid de Cartas */}
       {loadingCards ? (
-        <div className="text-center py-20">
-          <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-sm text-slate-400 font-medium">Buscando banco de dados de cartas...</p>
+        <div className="text-center py-20 animate-fade-in">
+          <div className="w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-xs text-slate-500 font-medium">Buscando banco de cartas...</p>
         </div>
       ) : errorCards ? (
-        <div className="glass-panel p-6 border-red-500/40 text-center max-w-sm mx-auto my-10">
-          <AlertTriangle className="text-red-500 mx-auto mb-4" size={32} />
-          <p className="text-slate-350 font-bold mb-2">Falha na conexão</p>
-          <p className="text-xs text-slate-450 mb-4">{errorCards}</p>
-          <button className="btn btn-primary text-xs" onClick={() => window.location.reload()}>Recarregar Banco</button>
+        <div className="glass-panel p-6 border-red-500/30 text-center max-w-sm mx-auto my-8">
+          <AlertTriangle className="text-red-500 mx-auto mb-3" size={28} />
+          <p className="text-slate-800 font-bold text-sm mb-1.5">Erro de conexão</p>
+          <p className="text-xs text-slate-500 mb-4">{errorCards}</p>
+          <button className="btn btn-primary text-xs py-1.5" onClick={() => window.location.reload()}>Recarregar Banco</button>
         </div>
       ) : (
-        <div className="card-grid">
-          {filteredCards.slice(0, 100).map(card => (
-            <div 
-              key={`${card.card_set_id}_${card.card_name}_${card.card_image}`}
-              onClick={() => onOpenCardModal(card)}
-              className="op-card-container group"
-            >
-              <div className="op-card-wrapper">
-                <img 
-                  src={card.card_image} 
-                  alt={card.card_name} 
-                  className="w-full h-full object-cover rounded-lg border border-slate-900"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                  <div className="p-2 bg-black/60 rounded-full border border-slate-800 text-cyan-400 shadow-lg">
-                    <Eye size={20} />
+        <>
+          <div className="card-grid">
+            {visibleCards.map(card => {
+              const hasCost = card.card_cost !== null && card.card_cost !== 'NULL';
+              return (
+                <div 
+                  key={`${card.card_set_id}_${card.card_name}_${card.card_image}`}
+                  onClick={() => onOpenCardModal(card)}
+                  className={`op-card-container group rarity-${card.rarity.toLowerCase()} type-${card.card_type.toLowerCase()}`}
+                >
+                  <div className="op-card-wrapper">
+                    {/* Custo & Cor no Topo (Mobile First Overlay) */}
+                    <div className="card-top-badges">
+                      {hasCost ? (
+                        <span className="cost-badge">{card.card_cost}</span>
+                      ) : (
+                        <div />
+                      )}
+                      <span className={`color-badge ${card.card_color.toLowerCase()}`} />
+                    </div>
+
+                    <CardImage src={card.card_image} alt={card.card_name} />
+
+                    {/* Botão Hover Desktop */}
+                    <div className="hidden lg:flex absolute inset-0 bg-slate-900/10 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center pointer-events-none z-20">
+                      <div className="p-1.5 bg-blue-600 rounded-full border border-blue-400 text-white shadow-md">
+                        <Eye size={16} />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-1.5 text-left px-1">
+                    <p className="text-[10px] font-bold text-slate-800 truncate group-hover:text-blue-600 transition-colors">
+                      {card.card_name}
+                    </p>
+                    <span className="text-[8px] font-bold text-slate-500 font-mono block mt-0.5">
+                      {card.card_set_id}
+                    </span>
                   </div>
                 </div>
-              </div>
-              <div className="mt-2 text-left">
-                <p className="text-xs text-slate-300 font-semibold truncate group-hover:text-cyan-400 transition-colors">{card.card_name}</p>
-                <div className="flex items-center justify-between mt-1">
-                  <span className="text-[9px] font-bold text-slate-500 font-mono">{card.card_set_id}</span>
-                  <span className={`color-badge ${card.card_color.toLowerCase()}`} />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+              );
+            })}
+          </div>
 
-      {!loadingCards && filteredCards.length > 100 && (
-        <p className="text-center text-slate-500 text-[10px] mt-8 italic">
-          Exibindo as primeiras 100 cartas. Refine a busca ou filtre para obter resultados mais específicos.
-        </p>
+          {/* Botão Carregar Mais */}
+          {filteredCards.length > visibleCount && (
+            <div className="mt-8 text-center animate-fade-in">
+              <button 
+                onClick={() => setVisibleCount(prev => prev + 60)}
+                className="btn btn-secondary py-2 px-6 text-xs font-bold border-blue-600/10 hover:border-blue-600/30"
+              >
+                Carregar Mais Cartas
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
