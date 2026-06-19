@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import type { Deck } from '../types';
 
 /**
@@ -90,16 +90,19 @@ Use o formato:
 Seja direto, tático e evite jargões excessivos não relacionados ao jogo One Piece TCG.`;
 
   try {
-    // Inicializa o SDK do Gemini
-    const ai = new GoogleGenerativeAI(apiKey);
+    // Inicializa o SDK do Gemini (@google/genai)
+    const ai = new GoogleGenAI({ apiKey });
+
     // Usamos o modelo recomendado gemini-2.5-flash para respostas rápidas e ótimas
-    const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }]
+    const result = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt
     });
 
-    const responseText = result.response.text();
+    const responseText = result.text;
+    if (!responseText) {
+      throw new Error('O Gemini não retornou nenhum conteúdo na análise.');
+    }
     return responseText;
   } catch (error: unknown) {
     console.error('Erro na chamada da Gemini API:', error);

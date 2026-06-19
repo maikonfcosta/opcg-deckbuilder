@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useDeferredValue } from 'react';
 import { Search, SlidersHorizontal, Eye, AlertTriangle } from 'lucide-react';
 import type { OPCard } from '../types';
 
@@ -41,13 +41,17 @@ export default function CardExplorer({ allCards, loadingCards, errorCards, onOpe
   // Paginação inteligente (Carregamento Incremental)
   const [visibleCount, setVisibleCount] = useState(60);
 
+  // Busca adiada (P2.5) — mantém o input responsivo ao filtrar milhares de cartas
+  const deferredSearch = useDeferredValue(searchTerm);
+
   // Filtragem local
   const filteredCards = useMemo(() => {
+    const term = deferredSearch.toLowerCase();
     return allCards.filter(card => {
-      const matchesSearch = card.card_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            card.card_set_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            (card.card_text && card.card_text.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                            (card.sub_types && card.sub_types.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesSearch = card.card_name.toLowerCase().includes(term) ||
+                            card.card_set_id.toLowerCase().includes(term) ||
+                            (card.card_text && card.card_text.toLowerCase().includes(term)) ||
+                            (card.sub_types && card.sub_types.toLowerCase().includes(term));
 
       if (!matchesSearch) return false;
 
@@ -71,7 +75,7 @@ export default function CardExplorer({ allCards, loadingCards, errorCards, onOpe
 
       return true;
     });
-  }, [allCards, searchTerm, filterColor, filterType, filterCost, filterRarity]);
+  }, [allCards, deferredSearch, filterColor, filterType, filterCost, filterRarity]);
 
   // Seção visível paginada
   const visibleCards = useMemo(() => {

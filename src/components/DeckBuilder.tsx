@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
-import { 
-  Search, Info, Plus, Minus, AlertTriangle, CheckCircle, Save, ArrowLeft, BarChart2, Sparkles, ChevronDown, ChevronUp
+import { useState, useMemo, useRef, useDeferredValue } from 'react';
+import {
+  Search, Info, Plus, Minus, AlertTriangle, CheckCircle, Save, ArrowLeft, BarChart2, Sparkles, ChevronDown, ChevronUp, Download
 } from 'lucide-react';
 import type { OPCard, Deck } from '../types';
+import type { ConfirmState } from './ConfirmDialog';
 import DeckStats from './DeckStats';
 import GeminiAnalysis from './GeminiAnalysis';
 
@@ -10,8 +11,10 @@ interface DeckBuilderProps {
   currentDeck: Deck;
   allCards: OPCard[];
   loadingCards: boolean;
+  errorCards: string | null;
   onSaveDeck: () => void;
   onCancel: () => void;
+  requestConfirm: (state: ConfirmState) => void;
   onOpenCardModal: (card: OPCard) => void;
   
   onSelectLeader: (card: OPCard) => void;
@@ -52,8 +55,10 @@ export default function DeckBuilder({
   currentDeck,
   allCards,
   loadingCards,
+  errorCards,
   onSaveDeck,
   onCancel,
+  requestConfirm,
   onOpenCardModal,
   onSelectLeader,
   onAddCard,
@@ -65,7 +70,35 @@ export default function DeckBuilder({
   onStartAnalysis,
   onClearAnalysis
 }: DeckBuilderProps) {
-  
+
+  // Snapshot inicial para detectar alterações não salvas (P2.10)
+  const initialSnapshot = useRef(JSON.stringify(currentDeck));
+
+  const handleBack = () => {
+    const isDirty = JSON.stringify(currentDeck) !== initialSnapshot.current;
+    if (isDirty) {
+      requestConfirm({
+        message: 'Há alterações não salvas neste deck. Deseja sair mesmo assim?',
+        confirmLabel: 'Sair sem salvar',
+        destructive: true,
+        onConfirm: onCancel,
+      });
+    } else {
+      onCancel();
+    }
+  };
+
+  // Exporta o deck atual como arquivo JSON (P2.7)
+  const handleExport = () => {
+    const blob = new Blob([JSON.stringify(currentDeck, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${(currentDeck.name || 'deck').replace(/[^\w-]+/g, '_')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Abas para visualização Mobile
   const [activeTab, setActiveTab] = useState<BuilderTab>('search');
   
@@ -87,10 +120,11 @@ export default function DeckBuilder({
   }, [currentDeck]);
 
   // Lógica de compatibilidade de cor
-  const isColorCompatible = (cardColor: string, leaderColor: string | null): boolean => {
-    if (!leaderColor) return true;
-    const leaderColors = leaderColor.toLowerCase().split(/[\s/,\-+]+/).map(c => c.trim());
-    const cardColors = cardColor.toLowerCase().split(/[\s/,\-+]+/);
+  const isColorCompatible = (cardColor: string | null, leaderColor: string | null): boolean => {
+    if (!leaderColor || leaderColor === 'NULL') return true;
+    if (!cardColor || cardColor === 'NULL') return true; // sem cor definida: não bloqueia
+    const leaderColors = leaderColor.toLowerCase().split(/[\s/,\-+]+/).map(c => c.trim()).filter(Boolean);
+    const cardColors = cardColor.toLowerCase().split(/[\s/,\-+]+/).filter(Boolean);
     return cardColors.some(color => leaderColors.includes(color));
   };
 
@@ -157,13 +191,17 @@ export default function DeckBuilder({
     return { costCounts, typeCounts, counterCounts };
   }, [currentDeck]);
 
+  // Busca adiada (P2.5) — mantém o input responsivo ao filtrar milhares de cartas
+  const deferredSearch = useDeferredValue(searchTerm);
+
   // Filtragem
   const filteredCards = useMemo(() => {
+    const term = deferredSearch.toLowerCase();
     return allCards.filter(card => {
-      const matchesSearch = card.card_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            card.card_set_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            (card.card_text && card.card_text.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                            (card.sub_types && card.sub_types.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesSearch = card.card_name.toLowerCase().includes(term) ||
+                            card.card_set_id.toLowerCase().includes(term) ||
+                            (card.card_text && card.card_text.toLowerCase().includes(term)) ||
+                            (card.sub_types && card.sub_types.toLowerCase().includes(term));
       if (!matchesSearch) return false;
 
       if (filterColor !== 'All') {
@@ -184,7 +222,7 @@ export default function DeckBuilder({
 
       return true;
     });
-  }, [allCards, searchTerm, filterColor, filterType, filterCost]);
+  }, [allCards, deferredSearch, filterColor, filterType, filterCost]);
 
   // Cartas visíveis paginadas
   const visibleCards = useMemo(() => {
@@ -256,6 +294,13 @@ export default function DeckBuilder({
           <div className="text-center py-16">
             <div className="w-8 h-8 border-[3px] border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
             <p className="text-xs text-slate-500">Carregando cartas...</p>
+          </div>
+        ) : errorCards ? (
+          <div className="glass-panel p-5 border-red-500/30 text-center max-w-xs mx-auto my-8">
+            <AlertTriangle className="text-red-500 mx-auto mb-2" size={24} />
+            <p className="text-xs font-bold text-slate-800 mb-1">Erro ao carregar cartas</p>
+            <p className="text-[11px] text-slate-500 mb-3">{errorCards}</p>
+            <button className="btn btn-primary text-xs py-1.5" onClick={() => window.location.reload()}>Recarregar</button>
           </div>
         ) : (
           <>
@@ -400,7 +445,12 @@ export default function DeckBuilder({
       <div>
         <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Cartas do Deck ({totalMainCards}/50)</h4>
         {Object.keys(currentDeck.cards).length === 0 ? (
-          <p className="text-xs text-slate-500 py-4 text-center border border-dashed border-slate-200 rounded-lg bg-slate-50/30">Seu deck está vazio.</p>
+          <div className="py-5 px-4 text-center border border-dashed border-slate-200 rounded-lg bg-slate-50/30">
+            <p className="text-xs font-bold text-slate-600 mb-1">Seu deck está vazio</p>
+            <p className="text-[10px] text-slate-500 leading-relaxed">
+              1. Defina um Líder &nbsp;·&nbsp; 2. Adicione 50 cartas da lista ao lado (máx. 4 cópias cada) até a validação ficar verde.
+            </p>
+          </div>
         ) : (
           <div className="space-y-2">
             {Object.values(currentDeck.cards).map(entry => (
@@ -505,12 +555,13 @@ export default function DeckBuilder({
   );
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden">
+    <div className="flex-1 flex flex-col h-[calc(100dvh-64px)] lg:h-[calc(100dvh-64px)] max-lg:h-[100dvh] overflow-hidden">
       {/* Top Bar */}
       <div className="bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
-          <button 
-            onClick={onCancel}
+          <button
+            onClick={handleBack}
+            aria-label="Voltar"
             className="p-1.5 hover:bg-slate-100 rounded-md text-slate-500 hover:text-slate-800 transition-colors"
             title="Voltar"
           >
@@ -533,7 +584,15 @@ export default function DeckBuilder({
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button 
+          <button
+            onClick={handleExport}
+            aria-label="Exportar deck como JSON"
+            title="Exportar deck (JSON)"
+            className="btn btn-secondary py-1.5 px-3 text-xs font-bold"
+          >
+            <Download size={14} /> <span className="hidden sm:inline">Exportar</span>
+          </button>
+          <button
             onClick={onSaveDeck}
             className="btn btn-primary py-1.5 px-4 text-xs font-bold shadow-md animate-fade-in"
           >

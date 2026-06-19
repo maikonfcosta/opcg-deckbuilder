@@ -1,4 +1,5 @@
 import { Sparkles, AlertTriangle, X, Play } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import type { Deck } from '../types';
 
 interface GeminiAnalysisProps {
@@ -85,53 +86,10 @@ export default function GeminiAnalysis({
         </div>
       )}
 
-      {/* Relatório de Análise renderizado */}
+      {/* Relatório de Análise renderizado (P3.5 — react-markdown) */}
       {analysisResult && !loadingAnalysis && (
         <div className="markdown-content text-left text-xs max-h-[450px] overflow-y-auto pr-2 scrollbar-thin">
-          {analysisResult.split('\n').map((line, i) => {
-            // Renderização Markdown simples para o relatório
-            const trimmed = line.trim();
-            
-            if (trimmed.startsWith('### ')) {
-              return (
-                <h3 key={i} className="text-xs font-extrabold mt-5 mb-2 text-purple-600 border-b border-slate-200 pb-1 uppercase tracking-wider">
-                  {trimmed.replace('### ', '')}
-                </h3>
-              );
-            }
-            if (trimmed.startsWith('## ')) {
-              return (
-                <h3 key={i} className="text-sm font-extrabold mt-5 mb-2 text-purple-600 border-b border-slate-200 pb-1 uppercase tracking-wider">
-                  {trimmed.replace('## ', '')}
-                </h3>
-              );
-            }
-            if (trimmed.startsWith('- **Retirar:**') || trimmed.startsWith('- **Adicionar:**') || trimmed.startsWith('- **Motivo:**')) {
-              const boldMatch = trimmed.match(/\*\*(.*?)\*\*/);
-              const restText = trimmed.replace(/\*\*(.*?)\*\*/, '');
-              return (
-                <p key={i} className="ml-4 text-slate-600 my-1 leading-relaxed">
-                  {boldMatch ? <strong className="text-purple-700 font-bold">{boldMatch[1]}</strong> : null}
-                  {restText}
-                </p>
-              );
-            }
-            if (trimmed.startsWith('- ')) {
-              return (
-                <li key={i} className="ml-4 text-slate-600 list-disc my-1.5 leading-relaxed">
-                  {trimmed.replace('- ', '')}
-                </li>
-              );
-            }
-            if (trimmed === '') {
-              return <div key={i} className="h-2" />;
-            }
-            return (
-              <p key={i} className="my-1.5 text-slate-600 leading-relaxed">
-                {trimmed}
-              </p>
-            );
-          })}
+          <ReactMarkdown>{analysisResult}</ReactMarkdown>
         </div>
       )}
     </div>

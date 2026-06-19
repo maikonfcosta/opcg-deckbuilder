@@ -1,5 +1,5 @@
-import React from 'react';
-import { Plus, PlusCircle, Trash2, ChevronRight, AlertTriangle } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Plus, PlusCircle, Trash2, ChevronRight, AlertTriangle, Upload } from 'lucide-react';
 import type { Deck } from '../types';
 
 interface DashboardProps {
@@ -7,9 +7,18 @@ interface DashboardProps {
   onCreateDeck: () => void;
   onEditDeck: (deck: Deck) => void;
   onDeleteDeck: (id: string, e: React.MouseEvent) => void;
+  onImportDeck: (file: File) => void;
 }
 
-export default function Dashboard({ decks, onCreateDeck, onEditDeck, onDeleteDeck }: DashboardProps) {
+export default function Dashboard({ decks, onCreateDeck, onEditDeck, onDeleteDeck, onImportDeck }: DashboardProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) onImportDeck(file);
+    e.target.value = ''; // permite reimportar o mesmo arquivo
+  };
+
   return (
     <div className="flex-1 max-w-7xl w-full mx-auto px-4 py-8 animate-fade-in pb-20">
       
@@ -41,10 +50,24 @@ export default function Dashboard({ decks, onCreateDeck, onEditDeck, onDeleteDec
         </div>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-6 flex items-center justify-between gap-3">
         <h2 className="text-xl font-bold text-slate-800 border-l-2 border-blue-600 pl-2.5">
           Meus Decks Salvos ({decks.length})
         </h2>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="btn btn-secondary py-1.5 px-3 text-xs"
+        >
+          <Upload size={14} /> Importar
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json,.json"
+          onChange={handleFileChange}
+          className="hidden"
+          aria-label="Importar deck a partir de arquivo JSON"
+        />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

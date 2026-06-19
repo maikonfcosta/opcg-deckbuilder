@@ -13,6 +13,10 @@ import CardExplorer from './components/CardExplorer';
 import DeckBuilder from './components/DeckBuilder';
 import Settings from './components/Settings';
 import CardModal from './components/CardModal';
+import Toast from './components/Toast';
+import type { ToastData, ToastType } from './components/Toast';
+import ConfirmDialog from './components/ConfirmDialog';
+import type { ConfirmState } from './components/ConfirmDialog';
 
 // Utilitário para gerar ID único
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -65,6 +69,17 @@ export default function App() {
   const [selectedCard, setSelectedCard] = useState<OPCard | null>(null);
   const [ligaPrices, setLigaPrices] = useState<LigaCardPrice | null>(null);
   const [loadingLiga, setLoadingLiga] = useState<boolean>(false);
+
+  // Toast e Confirmação (P2.1)
+  const [toast, setToast] = useState<ToastData | null>(null);
+  const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
+
+  const notify = (message: string, type: ToastType = 'success') => {
+    setToast({ message, type });
+    window.setTimeout(() => setToast(null), 3000);
+  };
+
+  const requestConfirm = (state: ConfirmState) => setConfirmState(state);
 
   // --- Efeitos ---
   // Carrega o banco de cartas principal
@@ -122,12 +137,43 @@ export default function App() {
     setView('builder');
   };
 
+  // Importa um deck a partir de um arquivo JSON exportado (P2.7)
+  const handleImportDeck = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result)) as Partial<Deck>;
+        if (!parsed || typeof parsed !== 'object' || !parsed.cards) {
+          throw new Error('estrutura inválida');
+        }
+        const imported: Deck = {
+          id: generateId(),
+          name: parsed.name ? `${parsed.name} (importado)` : 'Deck importado',
+          leader: parsed.leader ?? null,
+          cards: parsed.cards,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        saveDecks([...decks, imported]);
+        notify('Deck importado com sucesso!', 'success');
+      } catch {
+        notify('Arquivo de deck inválido.', 'error');
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const handleDeleteDeck = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Deseja realmente excluir este deck?')) {
-      const updated = decks.filter(d => d.id !== id);
-      saveDecks(updated);
-    }
+    requestConfirm({
+      message: 'Deseja realmente excluir este deck? Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      destructive: true,
+      onConfirm: () => {
+        saveDecks(decks.filter(d => d.id !== id));
+        notify('Deck excluído.', 'info');
+      },
+    });
   };
 
   const handleSaveCurrentDeck = () => {
@@ -146,7 +192,7 @@ export default function App() {
 
     saveDecks(updatedDecks);
     setCurrentDeck(updatedDeck);
-    alert('Deck salvo localmente!');
+    notify('Deck salvo localmente!', 'success');
     setView('dashboard');
   };
 
@@ -216,11 +262,12 @@ export default function App() {
     switch (view) {
       case 'dashboard':
         return (
-          <Dashboard 
-            decks={decks} 
-            onCreateDeck={handleCreateDeck} 
-            onEditDeck={handleEditDeck} 
+          <Dashboard
+            decks={decks}
+            onCreateDeck={handleCreateDeck}
+            onEditDeck={handleEditDeck}
             onDeleteDeck={handleDeleteDeck}
+            onImportDeck={handleImportDeck}
           />
         );
       case 'explorer':
@@ -234,12 +281,14 @@ export default function App() {
         );
       case 'builder':
         return (
-          <DeckBuilder 
+          <DeckBuilder
             currentDeck={currentDeck}
             allCards={allCards}
             loadingCards={loadingCards}
+            errorCards={errorCards}
             onSaveDeck={handleSaveCurrentDeck}
             onCancel={() => setView('dashboard')}
+            requestConfirm={requestConfirm}
             onOpenCardModal={handleOpenCardModal}
             onSelectLeader={handleSelectLeader}
             onAddCard={handleAddCard}
@@ -353,13 +402,19 @@ export default function App() {
 
       {/* Modal Global de Carta */}
       {selectedCard && (
-        <CardModal 
+        <CardModal
           card={selectedCard}
           onClose={() => { setSelectedCard(null); setLigaPrices(null); }}
           ligaPrices={ligaPrices}
           loadingLiga={loadingLiga}
         />
       )}
+
+      {/* Confirmação global e Toast (P2.1) */}
+      {confirmState && (
+        <ConfirmDialog confirm={confirmState} onClose={() => setConfirmState(null)} />
+      )}
+      <Toast toast={toast} />
     </div>
   );
 }

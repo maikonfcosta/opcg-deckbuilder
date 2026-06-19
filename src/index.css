@@ -523,10 +523,25 @@ a:hover {
   color: var(--text-primary);
 }
 
+.markdown-content ul,
+.markdown-content ol {
+  margin: 8px 0 12px 20px;
+  padding-left: 4px;
+}
+
+.markdown-content ul { list-style: disc; }
+.markdown-content ol { list-style: decimal; }
+
 .markdown-content li {
-  margin-left: 16px;
   margin-bottom: 6px;
   color: var(--text-secondary);
+}
+
+.markdown-content h2 {
+  margin-top: 18px;
+  margin-bottom: 8px;
+  color: var(--neon-purple);
+  font-size: 1.1rem;
 }
 
 /* Bottom Navigation Mobile Premium (Clean Style) */
