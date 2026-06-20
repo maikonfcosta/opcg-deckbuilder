@@ -8,7 +8,7 @@ interface SettingsProps {
 }
 
 export default function Settings({ settings, onSaveSettings }: SettingsProps) {
-  const [apiKey, setApiKey] = useState(settings.geminiApiKey);
+  const [apiKey, setApiKey] = useState(settings.anthropicApiKey);
   const [saved, setSaved] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -33,13 +33,13 @@ export default function Settings({ settings, onSaveSettings }: SettingsProps) {
             <Sparkles size={24} />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-slate-800">Google Gemini API</h3>
-            <p className="text-xs text-slate-500">Configuração de chave do AI Studio</p>
+            <h3 className="text-xl font-bold text-slate-800">Anthropic Claude API</h3>
+            <p className="text-xs text-slate-500">Configuração de chave do Console da Anthropic</p>
           </div>
         </div>
 
         <p className="text-sm text-slate-600 leading-relaxed mb-6">
-          Para realizar as análises estratégicas do deck (avaliando curvas de Don!!, counters de defesa e sinergias) e receber sugestões de substituições de cartas, este webapp conecta-se de forma direta à API do Gemini usando a sua própria chave pessoal.
+          Para realizar as análises estratégicas do deck (avaliando curvas de Don!!, counters de defesa e sinergias) e receber sugestões de substituições de cartas, este webapp conecta-se de forma direta à API do Claude usando a sua própria chave pessoal.
           <br /><br />
           Sua chave é armazenada de forma estrita no <code className="text-xs text-blue-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">localStorage</code> do seu navegador e nunca passa por servidores intermediários.
         </p>
@@ -48,24 +48,24 @@ export default function Settings({ settings, onSaveSettings }: SettingsProps) {
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <Key size={14} className="text-purple-600" />
-              Chave da API do Gemini
+              Chave da API da Anthropic
             </label>
-            <input 
-              type="password" 
-              placeholder="Cole sua API Key aqui (começa com AIza...)" 
+            <input
+              type="password"
+              placeholder="Cole sua API Key aqui (começa com sk-ant-...)"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               className="form-input"
             />
             <span className="text-[10px] text-slate-500 mt-2 block">
-              Não possui uma chave? Crie uma de forma gratuita no{' '}
-              <a 
-                href="https://aistudio.google.com/" 
-                target="_blank" 
-                rel="noopener noreferrer" 
+              Não possui uma chave? Crie uma no{' '}
+              <a
+                href="https://console.anthropic.com/"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-blue-600 hover:underline inline-flex items-center gap-0.5"
               >
-                Google AI Studio (aistudio.google.com)
+                Console da Anthropic (console.anthropic.com)
               </a>.
             </span>
           </div>

@@ -18,6 +18,7 @@ interface DeckBuilderProps {
   onOpenCardModal: (card: OPCard) => void;
   
   onSelectLeader: (card: OPCard) => void;
+  onClearLeader: () => void;
   onAddCard: (card: OPCard) => void;
   onRemoveCard: (cardId: string) => void;
   onRenameDeck: (newName: string) => void;
@@ -61,6 +62,7 @@ export default function DeckBuilder({
   requestConfirm,
   onOpenCardModal,
   onSelectLeader,
+  onClearLeader,
   onAddCard,
   onRemoveCard,
   onRenameDeck,
@@ -104,7 +106,6 @@ export default function DeckBuilder({
   
   // Filtros internos
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterColor, setFilterColor] = useState('All');
   const [filterType, setFilterType] = useState('All');
   const [filterCost, setFilterCost] = useState('All');
 
@@ -194,19 +195,34 @@ export default function DeckBuilder({
   // Busca adiada (P2.5) — mantém o input responsivo ao filtrar milhares de cartas
   const deferredSearch = useDeferredValue(searchTerm);
 
-  // Filtragem
+  // Filtragem — fluxo leader-first
   const filteredCards = useMemo(() => {
     const term = deferredSearch.toLowerCase();
-    return allCards.filter(card => {
-      const matchesSearch = card.card_name.toLowerCase().includes(term) ||
-                            card.card_set_id.toLowerCase().includes(term) ||
-                            (card.card_text && card.card_text.toLowerCase().includes(term)) ||
-                            (card.sub_types && card.sub_types.toLowerCase().includes(term));
-      if (!matchesSearch) return false;
 
-      if (filterColor !== 'All') {
-        const colors = card.card_color.toLowerCase().split(/[\s/,\-+]+/);
-        if (!colors.includes(filterColor.toLowerCase())) return false;
+    if (!currentDeck.leader) {
+      // Passo 1: mostrar apenas Leaders, com busca opcional por nome/ID
+      return allCards.filter(card => {
+        if (card.card_type !== 'Leader') return false;
+        if (!term) return true;
+        return (
+          card.card_name.toLowerCase().includes(term) ||
+          card.card_set_id.toLowerCase().includes(term)
+        );
+      });
+    }
+
+    // Passo 2: cartas não-Leader filtradas pela cor do Leader
+    return allCards.filter(card => {
+      if (card.card_type === 'Leader') return false;
+      if (!isColorCompatible(card.card_color, currentDeck.leader!.card_color)) return false;
+
+      if (term) {
+        const matches =
+          card.card_name.toLowerCase().includes(term) ||
+          card.card_set_id.toLowerCase().includes(term) ||
+          (card.card_text && card.card_text.toLowerCase().includes(term)) ||
+          (card.sub_types && card.sub_types.toLowerCase().includes(term));
+        if (!matches) return false;
       }
 
       if (filterType !== 'All' && card.card_type !== filterType) return false;
@@ -222,7 +238,7 @@ export default function DeckBuilder({
 
       return true;
     });
-  }, [allCards, deferredSearch, filterColor, filterType, filterCost]);
+  }, [allCards, deferredSearch, filterType, filterCost, currentDeck.leader]);
 
   // Cartas visíveis paginadas
   const visibleCards = useMemo(() => {
@@ -232,60 +248,77 @@ export default function DeckBuilder({
   // Lado do Banco de Dados (Seleção)
   const renderCardSelectionSection = () => (
     <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/50">
+      {/* Banner de Passo: Passo 1 (sem líder) ou info do líder (Passo 2) */}
+      {!currentDeck.leader ? (
+        <div className="px-4 py-3 bg-amber-50 border-b border-amber-200 flex items-center gap-2">
+          <AlertTriangle className="text-amber-600 flex-shrink-0" size={15} />
+          <p className="text-xs font-bold text-amber-800">
+            Passo 1: Escolha o Líder do seu deck para começar a construção.
+          </p>
+        </div>
+      ) : (
+        <div className="px-4 py-2.5 bg-blue-50/80 border-b border-blue-200/80 flex items-center gap-2.5">
+          <div className="w-7 h-10 rounded border border-blue-200 overflow-hidden bg-slate-100 flex-shrink-0">
+            <img src={currentDeck.leader.card_image} alt={currentDeck.leader.card_name} className="w-full h-full object-cover" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wide">Líder ativo</p>
+            <p className="text-xs font-bold text-slate-800 truncate">{currentDeck.leader.card_name}</p>
+          </div>
+          <span className={`color-badge ${currentDeck.leader.card_color.toLowerCase()}`} style={{ width: 10, height: 10 }} />
+          <button
+            onClick={onClearLeader}
+            className="text-[10px] text-slate-500 hover:text-red-600 font-semibold px-2 py-1 hover:bg-red-50 rounded transition-colors flex-shrink-0"
+          >
+            Trocar
+          </button>
+        </div>
+      )}
+
       {/* Filtros Rápidos */}
       <div className="p-4 bg-white/95 border-b border-slate-200/80 flex flex-wrap gap-2.5 sticky top-0 z-10">
         <div className="flex-1 min-w-[140px] relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
-          <input 
-            type="text" 
-            placeholder="Nome, ID..." 
+          <input
+            type="text"
+            placeholder={currentDeck.leader ? "Nome, ID, efeito..." : "Buscar líder..."}
             value={searchTerm}
             onChange={(e) => { setSearchTerm(e.target.value); setVisibleCount(40); }}
             className="form-input pl-8 py-1.5 text-xs"
           />
         </div>
-        <select 
-          value={filterColor} 
-          onChange={(e) => { setFilterColor(e.target.value); setVisibleCount(40); }}
-          className="form-select py-1.5 px-2 text-[10px] w-24"
-        >
-          <option value="All">Cores</option>
-          <option value="Red">Red</option>
-          <option value="Blue">Blue</option>
-          <option value="Green">Green</option>
-          <option value="Yellow">Yellow</option>
-          <option value="Black">Black</option>
-          <option value="Purple">Purple</option>
-        </select>
-        <select 
-          value={filterType} 
-          onChange={(e) => { setFilterType(e.target.value); setVisibleCount(40); }}
-          className="form-select py-1.5 px-2 text-[10px] w-24"
-        >
-          <option value="All">Tipos</option>
-          <option value="Leader">Leader</option>
-          <option value="Character">Character</option>
-          <option value="Event">Event</option>
-          <option value="Stage">Stage</option>
-        </select>
-        <select 
-          value={filterCost} 
-          onChange={(e) => { setFilterCost(e.target.value); setVisibleCount(40); }}
-          className="form-select py-1.5 px-2 text-[10px] w-20"
-        >
-          <option value="All">Custo</option>
-          <option value="0">0</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-          <option value="8">8</option>
-          <option value="9">9</option>
-          <option value="10+">10+</option>
-        </select>
+        {currentDeck.leader && (
+          <>
+            <select
+              value={filterType}
+              onChange={(e) => { setFilterType(e.target.value); setVisibleCount(40); }}
+              className="form-select py-1.5 px-2 text-[10px] w-24"
+            >
+              <option value="All">Tipos</option>
+              <option value="Character">Character</option>
+              <option value="Event">Event</option>
+              <option value="Stage">Stage</option>
+            </select>
+            <select
+              value={filterCost}
+              onChange={(e) => { setFilterCost(e.target.value); setVisibleCount(40); }}
+              className="form-select py-1.5 px-2 text-[10px] w-20"
+            >
+              <option value="All">Custo</option>
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10+">10+</option>
+            </select>
+          </>
+        )}
       </div>
 
       {/* Grid de Cartas com Skeletons e Overlays */}
@@ -611,17 +644,17 @@ export default function DeckBuilder({
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          1. Adicionar Cartas
+          {currentDeck.leader ? '2. Adicionar Cartas' : '1. Selecionar Líder'}
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab('deck')}
           className={`flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all ${
-            activeTab === 'deck' 
-              ? 'border-blue-600 text-blue-600 bg-blue-50/20' 
+            activeTab === 'deck'
+              ? 'border-blue-600 text-blue-600 bg-blue-50/20'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          2. Meu Deck ({totalMainCards}/50)
+          {currentDeck.leader ? '3.' : '2.'} Meu Deck ({totalMainCards}/50)
         </button>
       </div>
 

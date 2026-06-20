@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 
 import { fetchAllCards, fetchLigaPrices } from './services/api';
-import { analyzeDeckWithGemini } from './services/gemini';
+import { analyzeDeckWithClaude } from './services/anthropic';
 import type { OPCard, Deck, AppSettings, LigaCardPrice } from './types';
 
 // Componentes Modulares Refatorados
@@ -57,7 +57,7 @@ export default function App() {
         console.error(e);
       }
     }
-    return { geminiApiKey: '' };
+    return { anthropicApiKey: '' };
   });
 
   // Estados da IA
@@ -109,7 +109,7 @@ export default function App() {
   };
 
   const handleSaveSettings = (newApiKey: string) => {
-    const updated = { geminiApiKey: newApiKey };
+    const updated = { anthropicApiKey: newApiKey };
     setSettings(updated);
     localStorage.setItem('opcg_settings', JSON.stringify(updated));
   };
@@ -201,6 +201,10 @@ export default function App() {
     setCurrentDeck(prev => ({ ...prev, leader: card }));
   };
 
+  const handleClearLeader = () => {
+    setCurrentDeck(prev => ({ ...prev, leader: null }));
+  };
+
   const handleAddCard = (card: OPCard) => {
     setCurrentDeck(prev => {
       const updated = { ...prev.cards };
@@ -247,10 +251,10 @@ export default function App() {
     setAnalysisResult(null);
     setAnalysisError(null);
     try {
-      const report = await analyzeDeckWithGemini(currentDeck, settings.geminiApiKey);
+      const report = await analyzeDeckWithClaude(currentDeck, settings.anthropicApiKey);
       setAnalysisResult(report);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Erro de conexão com o Gemini.';
+      const message = err instanceof Error ? err.message : 'Erro de conexão com a API Anthropic.';
       setAnalysisError(message);
     } finally {
       setLoadingAnalysis(false);
@@ -291,6 +295,7 @@ export default function App() {
             requestConfirm={requestConfirm}
             onOpenCardModal={handleOpenCardModal}
             onSelectLeader={handleSelectLeader}
+            onClearLeader={handleClearLeader}
             onAddCard={handleAddCard}
             onRemoveCard={handleRemoveCard}
             onRenameDeck={handleRenameDeck}
