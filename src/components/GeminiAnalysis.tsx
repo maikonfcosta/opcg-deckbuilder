@@ -27,7 +27,7 @@ export default function GeminiAnalysis({
       <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
         <div className="flex items-center gap-2">
           <Sparkles className="text-purple-600 animate-pulse" size={18} />
-          <h4 className="text-sm font-bold text-purple-600">Análise de IA (Gemini)</h4>
+          <h4 className="text-sm font-bold text-purple-600">Análise de IA (Claude)</h4>
         </div>
         {(analysisResult || analysisError) && !loadingAnalysis && (
           <button
@@ -44,7 +44,7 @@ export default function GeminiAnalysis({
       {!analysisResult && !loadingAnalysis && !analysisError && (
         <div className="text-center py-4">
           <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-            Consulte o estrategista tático do Gemini para obter notas, identificar pontos fracos de curva e receber sugestões de substituições de cartas.
+            Consulte o estrategista tático do Claude para obter notas, identificar pontos fracos de curva e receber sugestões de substituições de cartas.
           </p>
           <button 
             onClick={onStartAnalysis}
