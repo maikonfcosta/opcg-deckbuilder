@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 
 import { fetchAllCards, fetchLigaPrices } from './services/api';
-import { analyzeDeckWithGemini } from './services/gemini';
+import { analyzeDeckWithClaude } from './services/anthropic';
 import type { OPCard, Deck, AppSettings, LigaCardPrice } from './types';
 
 // Componentes Modulares Refatorados
@@ -13,6 +13,10 @@ import CardExplorer from './components/CardExplorer';
 import DeckBuilder from './components/DeckBuilder';
 import Settings from './components/Settings';
 import CardModal from './components/CardModal';
+import Toast from './components/Toast';
+import type { ToastData, ToastType } from './components/Toast';
+import ConfirmDialog from './components/ConfirmDialog';
+import type { ConfirmState } from './components/ConfirmDialog';
 
 // Utilitário para gerar ID único
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -53,7 +57,7 @@ export default function App() {
         console.error(e);
       }
     }
-    return { geminiApiKey: '' };
+    return { anthropicApiKey: '' };
   });
 
   // Estados da IA
@@ -65,6 +69,17 @@ export default function App() {
   const [selectedCard, setSelectedCard] = useState<OPCard | null>(null);
   const [ligaPrices, setLigaPrices] = useState<LigaCardPrice | null>(null);
   const [loadingLiga, setLoadingLiga] = useState<boolean>(false);
+
+  // Toast e Confirmação (P2.1)
+  const [toast, setToast] = useState<ToastData | null>(null);
+  const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
+
+  const notify = (message: string, type: ToastType = 'success') => {
+    setToast({ message, type });
+    window.setTimeout(() => setToast(null), 3000);
+  };
+
+  const requestConfirm = (state: ConfirmState) => setConfirmState(state);
 
   // --- Efeitos ---
   // Carrega o banco de cartas principal
@@ -94,7 +109,7 @@ export default function App() {
   };
 
   const handleSaveSettings = (newApiKey: string) => {
-    const updated = { geminiApiKey: newApiKey };
+    const updated = { anthropicApiKey: newApiKey };
     setSettings(updated);
     localStorage.setItem('opcg_settings', JSON.stringify(updated));
   };
@@ -122,12 +137,43 @@ export default function App() {
     setView('builder');
   };
 
+  // Importa um deck a partir de um arquivo JSON exportado (P2.7)
+  const handleImportDeck = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result)) as Partial<Deck>;
+        if (!parsed || typeof parsed !== 'object' || !parsed.cards) {
+          throw new Error('estrutura inválida');
+        }
+        const imported: Deck = {
+          id: generateId(),
+          name: parsed.name ? `${parsed.name} (importado)` : 'Deck importado',
+          leader: parsed.leader ?? null,
+          cards: parsed.cards,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        saveDecks([...decks, imported]);
+        notify('Deck importado com sucesso!', 'success');
+      } catch {
+        notify('Arquivo de deck inválido.', 'error');
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const handleDeleteDeck = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Deseja realmente excluir este deck?')) {
-      const updated = decks.filter(d => d.id !== id);
-      saveDecks(updated);
-    }
+    requestConfirm({
+      message: 'Deseja realmente excluir este deck? Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      destructive: true,
+      onConfirm: () => {
+        saveDecks(decks.filter(d => d.id !== id));
+        notify('Deck excluído.', 'info');
+      },
+    });
   };
 
   const handleSaveCurrentDeck = () => {
@@ -146,13 +192,17 @@ export default function App() {
 
     saveDecks(updatedDecks);
     setCurrentDeck(updatedDeck);
-    alert('Deck salvo localmente!');
+    notify('Deck salvo localmente!', 'success');
     setView('dashboard');
   };
 
   // --- Modificações do Deck (Passadas por callback) ---
   const handleSelectLeader = (card: OPCard) => {
     setCurrentDeck(prev => ({ ...prev, leader: card }));
+  };
+
+  const handleClearLeader = () => {
+    setCurrentDeck(prev => ({ ...prev, leader: null }));
   };
 
   const handleAddCard = (card: OPCard) => {
@@ -201,10 +251,10 @@ export default function App() {
     setAnalysisResult(null);
     setAnalysisError(null);
     try {
-      const report = await analyzeDeckWithGemini(currentDeck, settings.geminiApiKey);
+      const report = await analyzeDeckWithClaude(currentDeck, settings.anthropicApiKey);
       setAnalysisResult(report);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Erro de conexão com o Gemini.';
+      const message = err instanceof Error ? err.message : 'Erro de conexão com a API Anthropic.';
       setAnalysisError(message);
     } finally {
       setLoadingAnalysis(false);
@@ -216,11 +266,12 @@ export default function App() {
     switch (view) {
       case 'dashboard':
         return (
-          <Dashboard 
-            decks={decks} 
-            onCreateDeck={handleCreateDeck} 
-            onEditDeck={handleEditDeck} 
+          <Dashboard
+            decks={decks}
+            onCreateDeck={handleCreateDeck}
+            onEditDeck={handleEditDeck}
             onDeleteDeck={handleDeleteDeck}
+            onImportDeck={handleImportDeck}
           />
         );
       case 'explorer':
@@ -234,14 +285,17 @@ export default function App() {
         );
       case 'builder':
         return (
-          <DeckBuilder 
+          <DeckBuilder
             currentDeck={currentDeck}
             allCards={allCards}
             loadingCards={loadingCards}
+            errorCards={errorCards}
             onSaveDeck={handleSaveCurrentDeck}
             onCancel={() => setView('dashboard')}
+            requestConfirm={requestConfirm}
             onOpenCardModal={handleOpenCardModal}
             onSelectLeader={handleSelectLeader}
+            onClearLeader={handleClearLeader}
             onAddCard={handleAddCard}
             onRemoveCard={handleRemoveCard}
             onRenameDeck={handleRenameDeck}
@@ -265,14 +319,14 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 pb-16 md:pb-0">
+    <div className="flex flex-col min-h-screen pb-16 md:pb-0">
       {/* Header Desktop (Oculto no Celular se visualização não for Builder) */}
-      <header className="hidden md:flex bg-slate-950/85 backdrop-blur-md border-b border-slate-900 h-16 items-center justify-between px-6 sticky top-0 z-30">
+      <header className="hidden-mobile bg-white/80 backdrop-blur-md border-b border-slate-200/80 h-16 items-center justify-between px-6 sticky top-0 z-30">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('dashboard')}>
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-purple-500 flex items-center justify-center font-bold text-black text-sm">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center font-bold text-white text-sm">
             ☠️
           </div>
-          <span className="font-extrabold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400">
+          <span className="font-extrabold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
             OPCG LAB
           </span>
         </div>
@@ -282,7 +336,7 @@ export default function App() {
             <button 
               onClick={() => setView('dashboard')}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                view === 'dashboard' ? 'bg-cyan-500/10 text-cyan-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+                view === 'dashboard' ? 'bg-blue-600/10 text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-800'
               }`}
             >
               <FolderHeart size={16} />
@@ -291,7 +345,7 @@ export default function App() {
             <button 
               onClick={() => setView('explorer')}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                view === 'explorer' ? 'bg-cyan-500/10 text-cyan-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+                view === 'explorer' ? 'bg-blue-600/10 text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-800'
               }`}
             >
               <Database size={16} />
@@ -300,7 +354,7 @@ export default function App() {
             <button 
               onClick={() => setView('settings')}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                view === 'settings' ? 'bg-cyan-500/10 text-cyan-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+                view === 'settings' ? 'bg-blue-600/10 text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-800'
               }`}
             >
               <SettingsIcon size={16} />
@@ -312,8 +366,8 @@ export default function App() {
 
       {/* Header Mobile Simplificado (Apenas Logo e Título, sem menu superior) */}
       {view !== 'builder' && (
-        <header className="flex md:hidden bg-slate-950/90 backdrop-blur-md border-b border-slate-900 h-14 items-center justify-center sticky top-0 z-30">
-          <span className="font-extrabold text-base tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 flex items-center gap-1.5">
+        <header className="hidden-desktop bg-white/80 backdrop-blur-md border-b border-slate-200/80 h-14 items-center justify-center sticky top-0 z-30">
+          <span className="font-extrabold text-base tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 flex items-center gap-1.5">
             ☠️ OPCG LAB
           </span>
         </header>
@@ -326,46 +380,46 @@ export default function App() {
 
       {/* Barra de Navegação Inferior (Mobile-Only, Oculta na tela do Builder) */}
       {view !== 'builder' && (
-        <nav className="flex md:hidden fixed bottom-0 left-0 right-0 h-16 bg-slate-950/95 backdrop-blur-md border-t border-slate-900 justify-around items-center z-30 px-2 shadow-2xl">
+        <nav className="bottom-nav md:hidden">
           <button 
             onClick={() => setView('dashboard')}
-            className={`flex flex-col items-center justify-center gap-1 py-1 w-16 transition-colors ${
-              view === 'dashboard' ? 'text-cyan-400' : 'text-slate-500'
-            }`}
+            className={`bottom-nav-item ${view === 'dashboard' ? 'active' : ''}`}
           >
             <FolderHeart size={18} />
-            <span className="text-[9px] font-bold">Decks</span>
+            <span>Decks</span>
           </button>
           <button 
             onClick={() => setView('explorer')}
-            className={`flex flex-col items-center justify-center gap-1 py-1 w-16 transition-colors ${
-              view === 'explorer' ? 'text-cyan-400' : 'text-slate-500'
-            }`}
+            className={`bottom-nav-item ${view === 'explorer' ? 'active' : ''}`}
           >
             <Database size={18} />
-            <span className="text-[9px] font-bold">Cartas</span>
+            <span>Cartas</span>
           </button>
           <button 
             onClick={() => setView('settings')}
-            className={`flex flex-col items-center justify-center gap-1 py-1 w-16 transition-colors ${
-              view === 'settings' ? 'text-cyan-400' : 'text-slate-500'
-            }`}
+            className={`bottom-nav-item ${view === 'settings' ? 'active' : ''}`}
           >
             <SettingsIcon size={18} />
-            <span className="text-[9px] font-bold">Ajustes</span>
+            <span>Ajustes</span>
           </button>
         </nav>
       )}
 
       {/* Modal Global de Carta */}
       {selectedCard && (
-        <CardModal 
+        <CardModal
           card={selectedCard}
           onClose={() => { setSelectedCard(null); setLigaPrices(null); }}
           ligaPrices={ligaPrices}
           loadingLiga={loadingLiga}
         />
       )}
+
+      {/* Confirmação global e Toast (P2.1) */}
+      {confirmState && (
+        <ConfirmDialog confirm={confirmState} onClose={() => setConfirmState(null)} />
+      )}
+      <Toast toast={toast} />
     </div>
   );
 }

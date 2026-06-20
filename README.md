@@ -1,73 +1,51 @@
-# React + TypeScript + Vite
+# OPCG LAB — Deckbuilder One Piece Card Game
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Web app para montar, validar e otimizar decks de **One Piece Card Game (OPCG)**: explore o banco de cartas, monte listas seguindo as regras de torneio, visualize curvas de Don!! e estatísticas, consulte preços em BRL e receba análise tática via IA (Google Gemini).
 
-Currently, two official plugins are available:
+## Funcionalidades
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Banco de cartas** — busca por nome/ID/efeito/subtipo + filtros (cor, tipo, custo, raridade) com carregamento incremental.
+- **Deck Builder** — seleção de líder, adição de cartas (máx. 4 cópias), validação de regras (1 líder + 50 cartas, compatibilidade de cor) em tempo real.
+- **Estatísticas** — curva de custo (Don!!), distribuição de tipos e counters de defesa.
+- **Preços** — cotações em Reais (BRL) via API LigaOnePiece.
+- **Análise de IA** — relatório tático (pontuação, forças, fraquezas, sugestões de substituição) gerado pelo Gemini.
+- **Persistência local** — decks e chave de API ficam no `localStorage` do navegador (sem backend).
 
-## React Compiler
+## Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+React 19 · TypeScript · Vite · Tailwind CSS v4 · lucide-react · `@google/generative-ai`
 
-## Expanding the ESLint configuration
+## Rodando localmente
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev      # http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Outros scripts:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build    # type-check + build de produção
+npm run preview  # serve o build
+npm run lint     # ESLint
 ```
+
+## Configuração da IA (Gemini)
+
+A análise de deck usa a API do Google Gemini com a **sua própria chave**:
+
+1. Crie uma chave gratuita no [Google AI Studio](https://aistudio.google.com/).
+2. Na app, vá em **Ajustes** e cole a chave.
+3. A chave é salva apenas no `localStorage` do navegador.
+
+> ⚠️ **Segurança:** a chave fica no cliente e a chamada ao Gemini é feita direto do navegador. Adequado para uso pessoal/local. **Não** publique uma instância compartilhada com essa arquitetura — nesse caso, mova a chamada para um proxy backend.
+
+## APIs externas
+
+| API | Uso |
+|---|---|
+| [optcgapi.com](https://www.optcgapi.com) | banco de cartas (sets, starters, promos, Don!!) |
+| LigaOnePiece API | preços de mercado em BRL |
+| Google Gemini | análise tática de deck |
+
+> Nota: em ambiente de desenvolvimento, alguns endpoints externos podem retornar erro de CORS no navegador. As chamadas afetadas são tratadas com fallback gracioso (lista vazia / preço indisponível) e não quebram a aplicação.
