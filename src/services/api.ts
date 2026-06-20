@@ -4,6 +4,35 @@ import type { OPCard, LigaCardPrice } from '../types';
 const OPTCG_BASE_URL = 'https://www.optcgapi.com/api';
 const LIGA_BASE_URL = 'https://liga-onepiece-api.onrender.com/api';
 
+// Cache local do banco de cartas (P2.6) — evita refetch dos 4 endpoints a cada reload
+const CARDS_CACHE_KEY = 'opcg_cards_cache';
+const CARDS_CACHE_TTL = 24 * 60 * 60 * 1000; // 24h em ms
+
+interface CardsCache {
+  ts: number;
+  data: OPCard[];
+}
+
+function readCardsCache(): OPCard[] | null {
+  try {
+    const raw = localStorage.getItem(CARDS_CACHE_KEY);
+    if (!raw) return null;
+    const cache = JSON.parse(raw) as CardsCache;
+    if (!cache.data?.length || Date.now() - cache.ts > CARDS_CACHE_TTL) return null;
+    return cache.data;
+  } catch {
+    return null;
+  }
+}
+
+function writeCardsCache(data: OPCard[]): void {
+  try {
+    localStorage.setItem(CARDS_CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+  } catch {
+    // localStorage cheio ou indisponível — ignora, cache é opcional
+  }
+}
+
 /**
  * Função utilitária para fazer requisição HTTP com tratamento de erro
  */
@@ -20,6 +49,10 @@ async function fetchJson<T>(url: string): Promise<T> {
  * Junta tudo e remove duplicatas com base no ID da imagem/carta.
  */
 export async function fetchAllCards(): Promise<OPCard[]> {
+  // Usa cache local válido (< 24h) quando disponível
+  const cached = readCardsCache();
+  if (cached) return cached;
+
   try {
     // Faz os fetches em paralelo para maior performance
     const [setCards, stCards, promoCards, donCards] = await Promise.all([
@@ -44,7 +77,9 @@ export async function fetchAllCards(): Promise<OPCard[]> {
       }
     });
 
-    return Array.from(uniqueCardsMap.values());
+    const result = Array.from(uniqueCardsMap.values());
+    if (result.length) writeCardsCache(result);
+    return result;
   } catch (error) {
     console.error('Erro ao buscar todas as cartas da OPTCG API:', error);
     throw error;
