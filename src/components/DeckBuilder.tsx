@@ -16,6 +16,7 @@ interface DeckBuilderProps {
   
   // Ações de alteração de deck
   onSelectLeader: (card: OPCard) => void;
+  onClearLeader: () => void;
   onAddCard: (card: OPCard) => void;
   onRemoveCard: (cardId: string) => void;
   onRenameDeck: (newName: string) => void;
@@ -38,6 +39,7 @@ export default function DeckBuilder({
   onCancel,
   onOpenCardModal,
   onSelectLeader,
+  onClearLeader,
   onAddCard,
   onRemoveCard,
   onRenameDeck,
@@ -53,7 +55,6 @@ export default function DeckBuilder({
   
   // Filtros internos da busca no construtor
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterColor, setFilterColor] = useState('All');
   const [filterType, setFilterType] = useState('All');
   const [filterCost, setFilterCost] = useState('All');
 
@@ -136,18 +137,34 @@ export default function DeckBuilder({
     return { costCounts, typeCounts, counterCounts };
   }, [currentDeck]);
 
-  // Filtros rápidos
+  // Filtros rápidos — fluxo leader-first
   const filteredCards = useMemo(() => {
-    return allCards.filter(card => {
-      const matchesSearch = card.card_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            card.card_set_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            (card.card_text && card.card_text.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                            (card.sub_types && card.sub_types.toLowerCase().includes(searchTerm.toLowerCase()));
-      if (!matchesSearch) return false;
+    const term = searchTerm.toLowerCase();
 
-      if (filterColor !== 'All') {
-        const colors = card.card_color.toLowerCase().split(/[\s/,\-+]+/);
-        if (!colors.includes(filterColor.toLowerCase())) return false;
+    if (!currentDeck.leader) {
+      // Passo 1: mostrar apenas Leaders, com busca opcional por nome/ID
+      return allCards.filter(card => {
+        if (card.card_type !== 'Leader') return false;
+        if (!term) return true;
+        return (
+          card.card_name.toLowerCase().includes(term) ||
+          card.card_set_id.toLowerCase().includes(term)
+        );
+      });
+    }
+
+    // Passo 2: cartas não-Leader filtradas pela cor do leader
+    return allCards.filter(card => {
+      if (card.card_type === 'Leader') return false;
+      if (!isColorCompatible(card.card_color, currentDeck.leader!.card_color)) return false;
+
+      if (term) {
+        const matches =
+          card.card_name.toLowerCase().includes(term) ||
+          card.card_set_id.toLowerCase().includes(term) ||
+          (card.card_text && card.card_text.toLowerCase().includes(term)) ||
+          (card.sub_types && card.sub_types.toLowerCase().includes(term));
+        if (!matches) return false;
       }
 
       if (filterType !== 'All' && card.card_type !== filterType) return false;
@@ -163,71 +180,87 @@ export default function DeckBuilder({
 
       return true;
     });
-  }, [allCards, searchTerm, filterColor, filterType, filterCost]);
+  }, [allCards, searchTerm, filterType, filterCost, currentDeck.leader]);
 
   // --- Renderização de Subseções ---
 
   // Lado do Banco de Dados de Cartas (Filtros e Grid)
   const renderCardSelectionSection = () => (
     <div className="flex-1 flex flex-col overflow-hidden bg-slate-950/20">
+      {/* Banner de passo */}
+      {!currentDeck.leader ? (
+        <div className="px-4 py-3 bg-yellow-500/10 border-b border-yellow-500/25 flex items-center gap-2">
+          <AlertTriangle className="text-yellow-400 flex-shrink-0" size={15} />
+          <p className="text-xs font-bold text-yellow-300">
+            Passo 1: Escolha o Líder do seu deck abaixo
+          </p>
+        </div>
+      ) : (
+        <div className="px-4 py-2 bg-slate-900/60 border-b border-slate-800 flex items-center gap-2">
+          <div className="w-6 h-8 rounded overflow-hidden border border-yellow-500/40 flex-shrink-0">
+            <img src={currentDeck.leader.card_image} alt="" className="w-full h-full object-cover" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold text-yellow-400 truncate">{currentDeck.leader.card_name}</p>
+            <p className="text-[9px] text-slate-500">{currentDeck.leader.card_color} · Passo 2: adicione cartas ao deck</p>
+          </div>
+          <button
+            onClick={onClearLeader}
+            className="text-[9px] text-slate-500 hover:text-cyan-400 transition-colors underline whitespace-nowrap"
+          >
+            Trocar líder
+          </button>
+        </div>
+      )}
+
       {/* Filtros de Busca Compactos */}
-      <div className="p-3 bg-slate-950/95 border-b border-slate-900 flex flex-wrap gap-2 sticky top-0 z-10">
+      <div className="p-4 bg-slate-950/95 border-b border-slate-900 flex flex-wrap gap-2 sticky top-0 z-10">
         <div className="flex-1 min-w-[180px] relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" size={15} />
-          <input 
-            type="text" 
-            placeholder="Nome, ID ou efeito..." 
+          <input
+            type="text"
+            placeholder={currentDeck.leader ? 'Nome, ID ou efeito...' : 'Buscar Leader por nome ou ID...'}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="form-input pl-8 py-1.5 text-xs"
           />
         </div>
-        <select 
-          value={filterColor} 
-          onChange={(e) => setFilterColor(e.target.value)}
-          className="form-select py-1.5 px-2 text-[10px] w-24"
-        >
-          <option value="All">Cores</option>
-          <option value="Red">Red</option>
-          <option value="Blue">Blue</option>
-          <option value="Green">Green</option>
-          <option value="Yellow">Yellow</option>
-          <option value="Black">Black</option>
-          <option value="Purple">Purple</option>
-        </select>
-        <select 
-          value={filterType} 
-          onChange={(e) => setFilterType(e.target.value)}
-          className="form-select py-1.5 px-2 text-[10px] w-24"
-        >
-          <option value="All">Tipos</option>
-          <option value="Leader">Leader</option>
-          <option value="Character">Character</option>
-          <option value="Event">Event</option>
-          <option value="Stage">Stage</option>
-        </select>
-        <select 
-          value={filterCost} 
-          onChange={(e) => setFilterCost(e.target.value)}
-          className="form-select py-1.5 px-2 text-[10px] w-20"
-        >
-          <option value="All">Custo</option>
-          <option value="0">0</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-          <option value="8">8</option>
-          <option value="9">9</option>
-          <option value="10+">10+</option>
-        </select>
+        {currentDeck.leader && (
+          <>
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="form-select py-1.5 px-2 text-[10px] w-28"
+            >
+              <option value="All">Tipos</option>
+              <option value="Character">Character</option>
+              <option value="Event">Event</option>
+              <option value="Stage">Stage</option>
+            </select>
+            <select
+              value={filterCost}
+              onChange={(e) => setFilterCost(e.target.value)}
+              className="form-select py-1.5 px-2 text-[10px] w-20"
+            >
+              <option value="All">Custo</option>
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10+">10+</option>
+            </select>
+          </>
+        )}
       </div>
 
       {/* Grid de Cartas */}
-      <div className="flex-1 overflow-y-auto p-3">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-5">
         {loadingCards ? (
           <div className="text-center py-16">
             <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
@@ -496,15 +529,15 @@ export default function DeckBuilder({
 
       {/* Abas Seletoras Mobile (Apenas Mobile - abaixo de lg) */}
       <div className="flex lg:hidden bg-slate-950 border-b border-slate-900">
-        <button 
+        <button
           onClick={() => setActiveTab('search')}
           className={`flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all ${
-            activeTab === 'search' 
-              ? 'border-cyan-500 text-cyan-400 bg-cyan-950/10' 
+            activeTab === 'search'
+              ? 'border-cyan-500 text-cyan-400 bg-cyan-950/10'
               : 'border-transparent text-slate-450 hover:text-slate-200'
           }`}
         >
-          1. Adicionar Cartas
+          {currentDeck.leader ? '2. Adicionar Cartas' : '1. Selecionar Líder'}
         </button>
         <button 
           onClick={() => setActiveTab('deck')}
@@ -514,7 +547,7 @@ export default function DeckBuilder({
               : 'border-transparent text-slate-450 hover:text-slate-200'
           }`}
         >
-          2. Meu Deck ({totalMainCards}/50)
+          {currentDeck.leader ? '3.' : '2.'} Meu Deck ({totalMainCards}/50)
         </button>
       </div>
 
