@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Search, Home, Library, Settings, ChevronDown, Filter, Loader2 } from 'lucide-react';
+import { Search, Home, Library, Settings, ChevronDown, Loader2 } from 'lucide-react';
 import { OpcgCard } from './components/OpcgCard';
 import { CardModal } from './components/CardModal';
 import { DeckSummary } from './components/DeckSummary';

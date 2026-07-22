@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/icon.jpg" alt="OPCG LAB Logo" width="200" />
+</p>
+
 # OPCG LAB — Deckbuilder One Piece Card Game
 
 Web app para montar, validar e otimizar decks de **One Piece Card Game (OPCG)**: explore o banco de cartas, monte listas seguindo regras oficiais de torneio, visualize curvas de Don!! e estatísticas, e receba análise tática com auto-ajuste via IA (Google Gemini).

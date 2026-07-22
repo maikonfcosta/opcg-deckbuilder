@@ -130,7 +130,7 @@ Responda em português do Brasil, usando formatação Markdown (com títulos, li
   const formatForWhatsApp = (md: string) => {
     let text = md;
     // Converte Títulos para *TÍTULO* (Negrito no WhatsApp)
-    text = text.replace(/^#+\s+(.*$)/gm, (match, p1) => `*${p1.toUpperCase()}*`);
+    text = text.replace(/^#+\s+(.*$)/gm, (_, p1) => `*${p1.toUpperCase()}*`);
     // Converte Negrito Markdown **texto** para Negrito WhatsApp *texto*
     text = text.replace(/\*\*([^*]+)\*\*/g, '*$1*');
     // Converte Links [texto](url) para texto: url
