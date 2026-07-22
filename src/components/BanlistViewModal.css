@@ -1,0 +1,105 @@
+.banlist-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(8px);
+  padding: 16px;
+}
+
+.banlist-modal-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+.banlist-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255,255,255,0.02);
+}
+
+.banlist-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-main);
+}
+
+.banlist-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.banlist-section {
+  margin-bottom: 32px;
+}
+
+.banlist-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title.banned {
+  color: #ef4444; /* red-500 */
+}
+
+.section-title.restricted {
+  color: #eab308; /* yellow-500 */
+}
+
+.section-desc {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 16px;
+}
+
+.banlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.banlist-card-wrapper {
+  position: relative;
+  /* Add subtle styling to make it look non-interactive if needed */
+  transition: transform 0.2s ease;
+}
+
+.banlist-card-wrapper:hover {
+  transform: translateY(-4px);
+}
+
+.empty-msg {
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 16px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  text-align: center;
+}

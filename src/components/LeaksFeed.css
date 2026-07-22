@@ -1,0 +1,134 @@
+.leaks-loading-container,
+.leaks-error-container,
+.leaks-empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  grid-column: 1 / -1;
+  gap: 16px;
+}
+
+.leaks-feed-container {
+  grid-column: 1 / -1;
+  padding-bottom: 24px;
+}
+
+.leaks-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.leaks-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.leaks-badge {
+  background: rgba(255, 75, 75, 0.2);
+  color: #ff4b4b;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.leaks-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 24px;
+}
+
+.leaks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.leak-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.2s, border-color 0.2s;
+  padding: 0;
+}
+
+.leak-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.leak-image-container {
+  width: 100%;
+  height: 250px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.leak-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Ou cover, mas contain evita cortar cartas */
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.leak-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.leak-title {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.leak-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.leak-meta span {
+  font-size: 0.85rem;
+  color: #ffd54b;
+  font-weight: 600;
+}
+
+.leak-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: rgba(255,255,255,0.1);
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.leak-link:hover {
+  background: rgba(255,255,255,0.2);
+}

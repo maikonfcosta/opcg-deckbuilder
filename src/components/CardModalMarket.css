@@ -1,0 +1,42 @@
+/* Market section additions */
+.modal-market {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  border: 1px solid var(--border-glass);
+}
+.market-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+.market-prices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.market-version {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.version-name { color: var(--text-main); }
+.version-price { color: var(--color-green); font-weight: bold; }
+.market-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.8rem;
+  text-align: right;
+  margin-top: 4px;
+}
+.market-link:hover { text-decoration: underline; }
+.market-loading, .market-empty {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}

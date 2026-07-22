@@ -1,218 +1,198 @@
-import type React from 'react';
-import { useEffect } from 'react';
-import { X, TrendingUp, ExternalLink } from 'lucide-react';
-import type { OPCard, LigaCardPrice } from '../types';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Plus, Minus, Trash2, ShoppingCart } from 'lucide-react';
+import { fetchLigaPrices } from '../services/api';
+import type { LigaCardPrice } from '../types';
+import './CardModal.css';
+import './CardModalMarket.css';
 
 interface CardModalProps {
-  card: OPCard;
+  card: any | null;
   onClose: () => void;
-  ligaPrices: LigaCardPrice | null;
-  loadingLiga: boolean;
+  quantityInDeck: number;
+  onUpdateDeck: (card: any, quantity: number) => void;
 }
 
-export default function CardModal({ card, onClose, ligaPrices, loadingLiga }: CardModalProps) {
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
+export const CardModal: React.FC<CardModalProps> = ({ card, onClose, quantityInDeck, onUpdateDeck }) => {
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [priceData, setPriceData] = useState<LigaCardPrice | null>(null);
+  const [loadingPrice, setLoadingPrice] = useState(false);
+
+  // Reseta o estado do flip e busca preços quando a carta mudar
+  useEffect(() => {
+    setIsFlipped(false);
+    setPriceData(null);
+    if (card && card.card_set_id) {
+      setLoadingPrice(true);
+      fetchLigaPrices(card.card_set_id)
+        .then(data => setPriceData(data))
+        .catch(() => setPriceData(null))
+        .finally(() => setLoadingPrice(false));
     }
+  }, [card]);
+
+  if (!card) return null;
+
+  const isLeader = card.card_type === 'LEADER';
+  const maxCopies = isLeader ? 1 : 4;
+  const backImage = card.card_image.replace('.webp', '_b.webp');
+  
+  const handleIncrease = () => {
+    if (quantityInDeck < maxCopies) onUpdateDeck(card, quantityInDeck + 1);
   };
 
-  // P2.2 — Fecha com Esc e restaura o foco ao elemento anterior ao fechar
-  useEffect(() => {
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.removeEventListener('keydown', handleKey);
-      previouslyFocused?.focus?.();
-    };
-  }, [onClose]);
+  const handleDecrease = () => {
+    if (quantityInDeck > 0) onUpdateDeck(card, quantityInDeck - 1);
+  };
 
   return (
-    <div
-      className="modal-overlay animate-fade-in"
-      onClick={handleOverlayClick}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Ficha técnica: ${card.card_name}`}
-        className="glass-panel w-full md:max-w-4xl overflow-hidden relative rounded-t-2xl md:rounded-2xl max-h-[95vh] md:max-h-none flex flex-col"
-        onClick={(e) => e.stopPropagation()}
+    <AnimatePresence>
+      <motion.div 
+        className="modal-backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
       >
-        {/* Barra de Fechar Superior (Mobile Only) */}
-        <div className="flex md:hidden items-center justify-between px-4 py-3 bg-white border-b border-slate-100 sticky top-0 z-20">
-          <span className="text-xs font-bold text-slate-500">Ficha Técnica</span>
-          <button
-            onClick={onClose}
-            aria-label="Fechar"
-            className="p-1 bg-slate-100 border border-slate-200 rounded-full text-slate-500 hover:bg-slate-200"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        {/* Botão de Fechar Desktop */}
-        <button
-          onClick={onClose}
-          aria-label="Fechar"
-          className="hidden md:block absolute top-4 right-4 p-2 bg-slate-50 border border-slate-200 rounded-full text-slate-500 hover:bg-slate-100 transition-all z-20"
+        <motion.div 
+          className="modal-content"
+          initial={{ scale: 0.9, y: 20, opacity: 0 }}
+          animate={{ scale: 1, y: 0, opacity: 1 }}
+          exit={{ scale: 0.9, y: 20, opacity: 0 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          onClick={(e) => e.stopPropagation()}
         >
-          <X size={16} />
-        </button>
-
-        <div className="flex flex-col md:flex-row overflow-y-auto md:overflow-visible">
-          {/* Imagem da Carta */}
-          <div className="w-full md:w-2/5 p-6 flex flex-col items-center justify-center bg-slate-50/50 border-b md:border-b-0 md:border-r border-slate-100 flex-shrink-0">
-            <div className="w-full max-w-[210px] md:max-w-[260px] aspect-[2.5/3.5] rounded-xl overflow-hidden shadow-md border border-slate-200/60 relative op-card-container">
-              <img 
-                src={card.card_image} 
-                alt={card.card_name} 
-                className="w-full h-full object-cover" 
-              />
+          <button className="modal-close-btn" onClick={onClose}>
+            <X size={18} />
+          </button>
+          
+          {/* LADO ESQUERDO: IMAGEM (Com efeito 3D) */}
+          <div className="modal-left-pane">
+            <div className={`modal-image-wrapper ${isFlipped ? 'is-flipped' : ''}`}>
+              <div className="modal-image-inner">
+                <div className="modal-image-front">
+                  <img src={card.card_image} alt={card.card_name} />
+                </div>
+                {isLeader && (
+                  <div className="modal-image-back">
+                    <img src={backImage} alt={`${card.card_name} Awakened`} />
+                  </div>
+                )}
+              </div>
             </div>
-            <span className="text-[9px] text-slate-400 mt-3 font-semibold">Fonte de imagem • OPTCG API</span>
+
+            {/* Controles de Flip (Apenas para Leaders) */}
+            {isLeader && (
+              <div className="modal-flip-controls">
+                <button 
+                  className={`flip-btn ${!isFlipped ? 'active' : ''}`}
+                  onClick={() => setIsFlipped(false)}
+                >
+                  Base
+                </button>
+                <button 
+                  className={`flip-btn ${isFlipped ? 'active' : ''}`}
+                  onClick={() => setIsFlipped(true)}
+                >
+                  Awakened
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Ficha Técnica */}
-          <div className="flex-1 p-5 md:p-8 flex flex-col justify-between">
-            <div>
-              <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                <span className={`color-badge ${card.card_color.toLowerCase()}`} />
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{card.card_type}</span>
-                <span className="text-[9px] bg-slate-50 border border-slate-200 text-slate-600 px-2 py-0.5 rounded font-mono font-bold">
-                  {card.rarity}
-                </span>
-                {card.attribute && card.attribute !== 'NULL' && (
-                  <span className="text-[9px] bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-0.5 rounded-full font-bold">
-                    {card.attribute}
-                  </span>
-                )}
+          {/* LADO DIREITO: DETALHES E DADOS */}
+          <div className="modal-right-pane">
+            <div className="modal-header">
+              <h2 className="modal-title">{card.card_name}</h2>
+              <div className="modal-subtitle">
+                <span className={`color-dot ${card.card_color}`}></span>
+                {card.card_set_id} • {card.rarity} • {card.card_type}
               </div>
-              
-              <h2 className="text-2xl md:text-3xl font-extrabold mb-1 tracking-tight leading-tight text-slate-800">{card.card_name}</h2>
-              <p className="text-xs md:text-sm font-bold text-blue-600 mb-5">{card.card_set_id} | {card.set_name}</p>
-
-              {/* Grid de Atributos */}
-              <div className="grid grid-cols-3 gap-2 mb-5">
-                <div className="bg-slate-50 border border-slate-100 p-2 rounded-lg text-center md:text-left">
-                  <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Custo</p>
-                  <p className="text-sm font-black text-slate-700">
-                    {card.card_cost !== null && card.card_cost !== "NULL" ? card.card_cost : '—'}
-                  </p>
-                </div>
-                <div className="bg-slate-50 border border-slate-100 p-2 rounded-lg text-center md:text-left">
-                  <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Poder</p>
-                  <p className="text-sm font-black text-slate-700">
-                    {card.card_power !== null && card.card_power !== "NULL" ? card.card_power : '—'}
-                  </p>
-                </div>
-                <div className="bg-slate-50 border border-slate-100 p-2 rounded-lg text-center md:text-left">
-                  <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Counter</p>
-                  <p className="text-sm font-black text-slate-700">
-                    {card.counter_amount !== null ? `+${card.counter_amount}` : 'Sem'}
-                  </p>
-                </div>
-              </div>
-
-              {card.sub_types && card.sub_types !== "NULL" && (
-                <div className="mb-4">
-                  <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider mb-1">Categorias / Tags</p>
-                  <div className="flex flex-wrap gap-1">
-                    {card.sub_types.split('/').map((sub, i) => (
-                      <span key={i} className="inline-block px-2.5 py-0.5 bg-slate-50 border border-slate-200 rounded-full text-[10px] font-bold text-slate-600">
-                        {sub.trim()}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {card.card_text && card.card_text !== "NULL" && (
-                <div className="mb-6">
-                  <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider mb-1.5">Efeito da Carta</p>
-                  <p className="text-xs bg-slate-50 border border-slate-100 p-3.5 rounded-lg text-slate-600 leading-relaxed max-h-[140px] overflow-y-auto scrollbar-thin">
-                    {card.card_text}
-                  </p>
-                </div>
-              )}
             </div>
 
-            {/* Cotações da LigaOnePiece - Otimizado UI/UX */}
-            <div className="border-t border-slate-100 pt-5 mt-3 bg-gradient-to-t from-slate-50/20 to-transparent">
-              <div className="flex items-center justify-between mb-3.5">
-                <div className="flex items-center gap-1.5">
-                  <TrendingUp size={16} className="text-emerald-500" />
-                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-widest">Preços Liga One Piece</h4>
-                </div>
-                {ligaPrices && (
-                  <a 
-                    href={ligaPrices.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-[10px] text-blue-600 hover:text-blue-500 hover:underline flex items-center gap-0.5 font-bold"
-                  >
-                    Abrir Loja <ExternalLink size={10} />
-                  </a>
-                )}
+            {/* Controle de Quantidade no Deck */}
+            <div className="deck-control">
+              <div className="deck-control-header">
+                <span>Cópias no Deck:</span>
+                <span className="deck-count">{quantityInDeck} / {maxCopies}</span>
               </div>
-
-              {loadingLiga ? (
-                <div className="py-4 text-center">
-                  <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                  <p className="text-[10px] text-slate-400">Consultando API LigaOnePiece...</p>
+              <div className="deck-actions-row">
+                <button 
+                  className="deck-btn decrease" 
+                  onClick={handleDecrease}
+                  disabled={quantityInDeck === 0}
+                >
+                  {quantityInDeck === 1 ? <Trash2 size={18} /> : <Minus size={18} />}
+                </button>
+                <div className="deck-progress">
+                  {[...Array(maxCopies)].map((_, i) => (
+                    <div key={i} className={`progress-pip ${i < quantityInDeck ? 'filled' : ''}`}></div>
+                  ))}
                 </div>
-              ) : ligaPrices ? (
-                <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5">
-                  
-                  {/* Edição / Sincronização */}
-                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 text-[10px]">
-                    <div>
-                      <span className="text-slate-400 block">Coleção Catalogada</span>
-                      <strong className="text-slate-600 font-bold font-mono">{ligaPrices.edition_code || 'Avulso (OPCG)'}</strong>
-                    </div>
-                    <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border border-emerald-500/25 rounded-md font-bold uppercase tracking-wider text-[8px]">
-                      BRL (R$)
-                    </span>
-                  </div>
+                <button 
+                  className="deck-btn increase" 
+                  onClick={handleIncrease}
+                  disabled={quantityInDeck >= maxCopies}
+                >
+                  <Plus size={18} />
+                </button>
+              </div>
+            </div>
 
-                  {/* Lista de Versões Otimizadas com Badges de Preço */}
-                  {ligaPrices.versions && ligaPrices.versions.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      {ligaPrices.versions.map((ver, idx) => {
-                        const price = ver.price_avg || ver.price_min || 0;
-                        return (
-                          <div key={idx} className="flex justify-between items-center bg-white px-3 py-2 rounded-lg border border-slate-100">
-                            <span className="text-slate-600 font-medium truncate max-w-[130px]" title={ver.version_name}>
-                              {ver.version_name}
-                            </span>
-                            <span className="font-extrabold text-emerald-600 text-xs px-2 py-0.5 bg-emerald-50/50 border border-emerald-500/10 rounded-md">
-                              R$ {price.toFixed(2)}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5 p-2 bg-white border border-slate-100 rounded-lg text-slate-500 text-[11px] leading-relaxed">
-                      <span className="italic">
-                        {ligaPrices.message || 'Card catalogado sem preços ativos no momento.'}
+            <div className="modal-stats">
+              <div className="stat-item">
+                <span className="stat-label">Cost</span>
+                <span className="stat-value">{card.card_cost !== null ? card.card_cost : '-'}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Power</span>
+                <span className="stat-value">{card.card_power || '-'}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Combo</span>
+                <span className="stat-value">{card.counter_amount || '-'}</span>
+              </div>
+            </div>
+
+            {/* Mercado (Preços) */}
+            <div className="modal-market">
+              <h4 className="market-title">
+                <ShoppingCart size={16} /> Liga One Piece
+              </h4>
+              {loadingPrice ? (
+                <div className="market-loading">Buscando menor preço...</div>
+              ) : priceData && priceData.versions && priceData.versions.length > 0 ? (
+                <div className="market-prices">
+                  {priceData.versions.slice(0, 3).map((v, i) => (
+                    <div key={i} className="market-version">
+                      <span className="version-name">{v.version_name || 'Base'}</span>
+                      <span className="version-price">
+                        R$ {v.price_min.toFixed(2).replace('.', ',')}
                       </span>
                     </div>
-                  )}
+                  ))}
+                  <a href={priceData.url} target="_blank" rel="noopener noreferrer" className="market-link">
+                    Ver todos
+                  </a>
                 </div>
               ) : (
-                <p className="text-[10px] text-slate-400 italic text-center py-2 border border-dashed border-slate-200 rounded-lg">
-                  Preços indisponíveis em Reais (BRL) para este código no momento.
-                </p>
+                <div className="market-empty">Sem cotação disponível</div>
               )}
             </div>
 
+            {card.card_text && (
+              <div className="modal-skill">
+                {card.card_text.split('[br]').map((line: string, i: number) => (
+                  <span key={i}>
+                    {line}
+                    <br />
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
-}
+};
