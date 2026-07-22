@@ -1,21 +1,28 @@
+<p align="center">
+  <img src="public/icon.jpg" alt="OPCG LAB Logo" width="200" />
+</p>
+
 # OPCG LAB — Deckbuilder One Piece Card Game
 
-Web app para montar, validar e otimizar decks de **One Piece Card Game (OPCG)**: explore o banco de cartas, monte listas seguindo as regras de torneio, visualize curvas de Don!! e estatísticas, consulte preços em BRL e receba análise tática via IA (Google Gemini).
+Web app para montar, validar e otimizar decks de **One Piece Card Game (OPCG)**: explore o banco de cartas, monte listas seguindo regras oficiais de torneio, visualize curvas de Don!! e estatísticas, e receba análise tática com auto-ajuste via IA (Google Gemini).
 
-## Funcionalidades
+## 🚀 Funcionalidades
 
-- **Banco de cartas** — busca por nome/ID/efeito/subtipo + filtros (cor, tipo, custo, raridade) com carregamento incremental.
-- **Deck Builder** — seleção de líder, adição de cartas (máx. 4 cópias), validação de regras (1 líder + 50 cartas, compatibilidade de cor) em tempo real.
-- **Estatísticas** — curva de custo (Don!!), distribuição de tipos e counters de defesa.
-- **Preços** — cotações em Reais (BRL) via API LigaOnePiece.
-- **Análise de IA** — relatório tático (pontuação, forças, fraquezas, sugestões de substituição) gerado pelo Gemini.
-- **Persistência local** — decks e chave de API ficam no `localStorage` do navegador (sem backend).
+- **Banco de Cartas & Catálogo** — Busca instantânea por nome/ID/efeito/subtipo com filtros avançados (cor, tipo, custo, raridade) e paginação.
+- **Deck Builder & Assistente Inteligente** — Construção de decks com validação de regras em tempo real (1 líder + 50 cartas, checagem estrita de compatibilidade de cor e limite de 4 cópias).
+- **Formatos e Rotação Oficial** — Suporte nativo para os formatos **Standard** (filtra automaticamente cartas do Bloco 1 rotacionadas) e **Extra Regulation** (permitido todas as cartas).
+- **Banlist Integrada** — O construtor avisa e bloqueia ativamente a adição de cartas banidas, e limita a 1 cópia as cartas restritas.
+- **Leaks & Novidades (Em Tempo Real)** — Feed na página inicial consumindo dados reais via RSS do Reddit (r/OnePieceTCG) exibindo os últimos vazamentos e anúncios.
+- **Análise de IA (Gemini)** — Relatório tático completo focado em estratégia, sinergias, fraquezas, regras de banlist e mulligan gerado em Markdown. 
+- **Auto-Ajustar Deck (IA)** — Uma das grandes inovações do laboratório: a IA ajusta fisicamente o seu deck removendo cartas mortas e consertando a curva, sendo travada numa sandbox de regras (mantém o líder, mantém as cores, respeita a rotação e a banlist oficial).
+- **Exportação** — Função de copiar e compartilhar a análise do deck totalmente pré-formatada para **WhatsApp** (títulos, negritos corretos).
+- **Persistência Local** — Decks e chave de API ficam no `localStorage` do navegador, mantendo seus dados seguros e offline.
 
-## Stack
+## 🛠️ Stack
 
-React 19 · TypeScript · Vite · Tailwind CSS v4 · lucide-react · `@google/generative-ai`
+**React 19** · **TypeScript** · **Vite** · CSS Vanilla · **lucide-react** · `@google/generative-ai`
 
-## Rodando localmente
+## 💻 Rodando localmente
 
 ```bash
 npm install
@@ -30,22 +37,20 @@ npm run preview  # serve o build
 npm run lint     # ESLint
 ```
 
-## Configuração da IA (Gemini)
+## 🧠 Configuração da IA (Gemini)
 
-A análise de deck usa a API do Google Gemini com a **sua própria chave**:
+A análise tática e o auto-ajuste de deck exigem a API do Google Gemini com a **sua própria chave**:
 
 1. Crie uma chave gratuita no [Google AI Studio](https://aistudio.google.com/).
-2. Na app, vá em **Ajustes** e cole a chave.
-3. A chave é salva apenas no `localStorage` do navegador.
+2. Na app, abra um de seus decks salvos e cole a chave no painel "Configurar Inteligência Artificial".
+3. A chave é salva apenas no seu navegador localmente.
 
-> ⚠️ **Segurança:** a chave fica no cliente e a chamada ao Gemini é feita direto do navegador. Adequado para uso pessoal/local. **Não** publique uma instância compartilhada com essa arquitetura — nesse caso, mova a chamada para um proxy backend.
+> ⚠️ **Segurança:** A API Key nunca viaja para servidores de terceiros, ela faz chamadas direto do seu navegador para a infraestrutura do Google.
 
-## APIs externas
+## 📡 Integrações & APIs
 
-| API | Uso |
+| Fonte | Finalidade |
 |---|---|
-| [optcgapi.com](https://www.optcgapi.com) | banco de cartas (sets, starters, promos, Don!!) |
-| LigaOnePiece API | preços de mercado em BRL |
-| Google Gemini | análise tática de deck |
-
-> Nota: em ambiente de desenvolvimento, alguns endpoints externos podem retornar erro de CORS no navegador. As chamadas afetadas são tratadas com fallback gracioso (lista vazia / preço indisponível) e não quebram a aplicação.
+| [optcgapi.com](https://www.optcgapi.com) | Banco de cartas estruturado (Sets, Promos, Starters) |
+| Reddit RSS | Busca de Leaks em tempo real |
+| Google Gemini | Análise tática e Assistente Automático de Construtor |
