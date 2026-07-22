@@ -31,7 +31,7 @@ export interface Deck {
 }
 
 export interface AppSettings {
-  geminiApiKey: string;
+  anthropicApiKey: string;
 }
 
 export interface LigaCardPrice {
