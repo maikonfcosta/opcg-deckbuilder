@@ -1,6 +1,6 @@
 import React from 'react';
 import { ShieldCheck, AlertCircle } from 'lucide-react';
-import { BANNED_CARDS, RESTRICTED_CARDS, BANNED_PAIRS } from '../data/banlist';
+import { BANNED_CARDS, RESTRICTED_CARDS, BANNED_PAIRS } from '../../data/banlist';
 import './DeckSummary.css';
 
 interface DeckSummaryProps {

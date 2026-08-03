@@ -1,19 +1,19 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Search, Home, Library, Settings, ChevronDown, Loader2 } from 'lucide-react';
-import { OpcgCard } from './components/OpcgCard';
-import { CardModal } from './components/CardModal';
-import { DeckSummary } from './components/DeckSummary';
-import { ProfileView } from './components/ProfileView';
-import { DeckList } from './components/DeckList';
-import type { SavedDeck } from './components/DeckList';
-import { ViewDeckModal } from './components/ViewDeckModal';
-import { useDialog } from './components/DialogContext';
-import { AutoDeckWizard } from './components/AutoDeckWizard';
-import { ManualDeckWizard } from './components/ManualDeckWizard';
-import { BanlistViewModal } from './components/BanlistViewModal';
+import { OpcgCard } from './components/Card/OpcgCard';
+import { CardModal } from './components/Card/CardModal';
+import { DeckSummary } from './components/Deck/DeckSummary';
+import { ProfileView } from './components/Views/ProfileView';
+import { DeckList } from './components/Deck/DeckList';
+import type { SavedDeck } from './components/Deck/DeckList';
+import { ViewDeckModal } from './components/Deck/ViewDeckModal';
+import { useDialog } from './components/UI/DialogContext';
+import { AutoDeckWizard } from './components/Deck/AutoDeckWizard';
+import { ManualDeckWizard } from './components/Deck/ManualDeckWizard';
+import { BanlistViewModal } from './components/Views/BanlistViewModal';
 import { BANNED_CARDS, RESTRICTED_CARDS } from './data/banlist';
 import { Flame } from 'lucide-react';
-import { LeaksFeed } from './components/LeaksFeed';
+import { LeaksFeed } from './components/Views/LeaksFeed';
 
 const COLORS = ['Red', 'Blue', 'Green', 'Yellow', 'Black', 'Purple', 'Multicolor'];
 const TYPES = ['Leader', 'Character', 'Event', 'Stage'];
@@ -83,17 +83,18 @@ function App() {
 
   // 1. Fetch Assíncrono dos Dados (Performance)
   useEffect(() => {
-    import('./services/api').then(({ fetchAllCards }) => {
-      fetchAllCards()
-        .then(data => {
-          setAllCards(data);
-          setIsLoading(false);
-        })
-        .catch(err => {
-          console.error("Erro ao carregar banco de dados:", err);
-          setIsLoading(false);
-        });
-    });
+    Promise.all([
+      import('./services/api').then(({ fetchAllCards }) => fetchAllCards()),
+      import('./data/banlist').then(({ initBanlist }) => initBanlist())
+    ])
+      .then(([data]) => {
+        setAllCards(data);
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.error("Erro ao carregar banco de dados ou banlist:", err);
+        setIsLoading(false);
+      });
   }, []);
 
   const dynamicSeries = useMemo(() => {
@@ -526,6 +527,7 @@ function App() {
         {activeTab === 'profile' ? (
           <ProfileView 
             onViewBanlist={() => setShowBanlistModal(true)}
+            totalCards={allCards.length}
           />
         ) : activeTab === 'leaks' ? (
           <LeaksFeed />

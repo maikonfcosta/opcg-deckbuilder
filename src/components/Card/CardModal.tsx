@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Minus, Trash2, ShoppingCart } from 'lucide-react';
-import { fetchLigaPrices } from '../services/api';
-import type { LigaCardPrice } from '../types';
+import { fetchLigaPrices } from '../../services/api';
+import type { LigaCardPrice } from '../../types';
 import './CardModal.css';
 import './CardModalMarket.css';
 
@@ -17,19 +17,22 @@ export const CardModal: React.FC<CardModalProps> = ({ card, onClose, quantityInD
   const [isFlipped, setIsFlipped] = useState(false);
   const [priceData, setPriceData] = useState<LigaCardPrice | null>(null);
   const [loadingPrice, setLoadingPrice] = useState(false);
+  const [currency, setCurrency] = useState<'USD' | 'BRL'>('USD');
 
-  // Reseta o estado do flip e busca preços quando a carta mudar
+  // Reseta o estado do flip e busca preços quando a carta mudar (se for BRL)
   useEffect(() => {
     setIsFlipped(false);
-    setPriceData(null);
-    if (card && card.card_set_id) {
+  }, [card]);
+
+  useEffect(() => {
+    if (currency === 'BRL' && card && card.card_set_id && !priceData) {
       setLoadingPrice(true);
       fetchLigaPrices(card.card_set_id)
         .then(data => setPriceData(data))
         .catch(() => setPriceData(null))
         .finally(() => setLoadingPrice(false));
     }
-  }, [card]);
+  }, [card, currency]);
 
   if (!card) return null;
 
@@ -156,27 +159,64 @@ export const CardModal: React.FC<CardModalProps> = ({ card, onClose, quantityInD
 
             {/* Mercado (Preços) */}
             <div className="modal-market">
-              <h4 className="market-title">
-                <ShoppingCart size={16} /> Liga One Piece
-              </h4>
-              {loadingPrice ? (
-                <div className="market-loading">Buscando menor preço...</div>
-              ) : priceData && priceData.versions && priceData.versions.length > 0 ? (
-                <div className="market-prices">
-                  {priceData.versions.slice(0, 3).map((v, i) => (
-                    <div key={i} className="market-version">
-                      <span className="version-name">{v.version_name || 'Base'}</span>
-                      <span className="version-price">
-                        R$ {v.price_min.toFixed(2).replace('.', ',')}
+              <div className="market-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h4 className="market-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ShoppingCart size={16} /> Market Price
+                </h4>
+                <div className="currency-toggle" style={{ display: 'flex', background: 'var(--bg-primary)', borderRadius: '6px', padding: '2px', border: '1px solid var(--border)' }}>
+                  <button 
+                    onClick={() => setCurrency('USD')} 
+                    style={{ padding: '4px 12px', fontSize: '12px', borderRadius: '4px', background: currency === 'USD' ? 'var(--accent)' : 'transparent', color: currency === 'USD' ? '#fff' : 'var(--text-muted)', border: 'none', cursor: 'pointer' }}
+                  >
+                    USD
+                  </button>
+                  <button 
+                    onClick={() => setCurrency('BRL')} 
+                    style={{ padding: '4px 12px', fontSize: '12px', borderRadius: '4px', background: currency === 'BRL' ? 'var(--accent)' : 'transparent', color: currency === 'BRL' ? '#fff' : 'var(--text-muted)', border: 'none', cursor: 'pointer' }}
+                  >
+                    BRL
+                  </button>
+                </div>
+              </div>
+              
+              {currency === 'BRL' ? (
+                loadingPrice ? (
+                  <div className="market-loading">Buscando menor preço na Liga One Piece...</div>
+                ) : priceData && priceData.versions && priceData.versions.length > 0 ? (
+                  <div className="market-prices">
+                    {priceData.versions.slice(0, 3).map((v, i) => (
+                      <div key={i} className="market-version">
+                        <span className="version-name">{v.version_name || 'Base'}</span>
+                        <span className="version-price">
+                          R$ {v.price_min.toFixed(2).replace('.', ',')}
+                        </span>
+                      </div>
+                    ))}
+                    <a href={priceData.url} target="_blank" rel="noopener noreferrer" className="market-link">
+                      Ver na Liga One Piece
+                    </a>
+                  </div>
+                ) : (
+                  <div className="market-empty">Sem cotação na Liga One Piece</div>
+                )
+              ) : (
+                card.market_price ? (
+                  <div className="market-prices">
+                    <div className="market-version">
+                      <span className="version-name">TCGPlayer Market</span>
+                      <span className="version-price" style={{ color: '#4ade80' }}>
+                        $ {parseFloat(card.market_price).toFixed(2)}
                       </span>
                     </div>
-                  ))}
-                  <a href={priceData.url} target="_blank" rel="noopener noreferrer" className="market-link">
-                    Ver todos
-                  </a>
-                </div>
-              ) : (
-                <div className="market-empty">Sem cotação disponível</div>
+                    {card.tcgplayer_url && (
+                      <a href={card.tcgplayer_url} target="_blank" rel="noopener noreferrer" className="market-link">
+                        Ver no TCGPlayer
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  <div className="market-empty">Sem cotação no TCGPlayer</div>
+                )
               )}
             </div>
 

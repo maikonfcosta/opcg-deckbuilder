@@ -13,7 +13,8 @@ export interface OPCard {
   attribute: string;  // ex: "Special", "Slash", "Strike"
   card_image: string; // URL da imagem da optcgapi
   card_text: string;  // Efeito
-  market_price?: number;
+  market_price?: string;
+  tcgplayer_url?: string;
 }
 
 export interface DeckCardEntry {

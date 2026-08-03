@@ -4,9 +4,10 @@ import './ProfileView.css';
 
 interface ProfileViewProps {
   onViewBanlist: () => void;
+  totalCards: number;
 }
 
-export const ProfileView: React.FC<ProfileViewProps> = ({ onViewBanlist }) => {
+export const ProfileView: React.FC<ProfileViewProps> = ({ onViewBanlist, totalCards }) => {
   return (
     <div className="profile-container">
       <div className="profile-header-card">
@@ -44,7 +45,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onViewBanlist }) => {
           <div className="setting-label">
             Versão do Banco de Dados
           </div>
-          <span style={{ color: 'var(--text-muted)' }}>v1.1 (1.892 Cartas)</span>
+          <span style={{ color: 'var(--text-muted)' }}>v2.0 Poneglyph ({totalCards} Cartas)</span>
         </div>
       </div>
 

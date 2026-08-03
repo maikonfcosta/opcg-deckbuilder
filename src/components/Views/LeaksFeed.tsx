@@ -1,5 +1,5 @@
 import React from 'react';
-import { useRedditLeaks } from '../hooks/useRedditLeaks';
+import { useRedditLeaks } from '../../hooks/useRedditLeaks';
 import { Loader2, ExternalLink, Flame } from 'lucide-react';
 import './LeaksFeed.css';
 
