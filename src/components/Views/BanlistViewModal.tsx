@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { X, ShieldAlert, AlertTriangle } from 'lucide-react';
-import { BANNED_CARDS, RESTRICTED_CARDS, BANNED_PAIRS } from '../data/banlist';
+import { BANNED_CARDS, RESTRICTED_CARDS, BANNED_PAIRS } from '../../data/banlist';
 import './BanlistViewModal.css';
-import { OpcgCard } from './OpcgCard';
+import { OpcgCard } from '../Card/OpcgCard';
 
 interface BanlistViewModalProps {
   allCards: any[];

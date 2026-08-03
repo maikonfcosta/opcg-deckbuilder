@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { X, Wand2, Key, Loader2, Trash2, Sparkles, Copy, Share2 } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import ReactMarkdown from 'react-markdown';
-import { BANNED_CARDS, RESTRICTED_CARDS, BANNED_PAIRS } from '../data/banlist';
-import { useDialog } from './DialogContext';
-import { fetchLeaderMetaStats } from '../services/api';
+import { BANNED_CARDS, RESTRICTED_CARDS, BANNED_PAIRS } from '../../data/banlist';
+import { useDialog } from '../UI/DialogContext';
+import { fetchLeaderMetaStats } from '../../services/api';
 import './DeckAnalyzerModal.css';
 
 interface DeckAnalyzerModalProps {

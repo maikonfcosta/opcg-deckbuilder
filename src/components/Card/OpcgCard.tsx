@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import './OpcgCard.css';
 
-import type { OPCard } from '../types';
+import type { OPCard } from '../../types';
 
 interface CardProps {
   card: OPCard;

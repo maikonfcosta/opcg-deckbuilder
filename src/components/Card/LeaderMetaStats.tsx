@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { fetchLeaderMetaStats } from '../services/api';
-import type { PoneglyphLeaderMeta } from '../services/api';
-import type { OPCard } from '../types';
+import { fetchLeaderMetaStats } from '../../services/api';
+import type { PoneglyphLeaderMeta } from '../../services/api';
+import type { OPCard } from '../../types';
 import './LeaderMetaStats.css';
 import { Activity, Swords } from 'lucide-react';
 

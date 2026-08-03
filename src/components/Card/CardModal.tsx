@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Minus, Trash2, ShoppingCart } from 'lucide-react';
-import { fetchLigaPrices } from '../services/api';
-import type { LigaCardPrice } from '../types';
+import { fetchLigaPrices } from '../../services/api';
+import type { LigaCardPrice } from '../../types';
 import './CardModal.css';
 import './CardModalMarket.css';
 

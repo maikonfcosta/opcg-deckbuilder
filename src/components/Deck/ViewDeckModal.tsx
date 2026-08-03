@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { X, Copy, Edit2, Trash2, Layers, LayoutGrid, Wand2 } from 'lucide-react';
 import type { SavedDeck } from './DeckList';
 import './ViewDeckModal.css';
-import { useDialog } from './DialogContext';
+import { useDialog } from '../UI/DialogContext';
 import { DeckAnalyzerModal } from './DeckAnalyzerModal';
-import { LeaderMetaStats } from './LeaderMetaStats';
+import { LeaderMetaStats } from '../Card/LeaderMetaStats';
 
 interface ViewDeckModalProps {
   deck: SavedDeck;

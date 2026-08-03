@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, ChevronRight, ChevronLeft, Check, Wand2 } from 'lucide-react';
-import { BANNED_CARDS, RESTRICTED_CARDS } from '../data/banlist';
+import { BANNED_CARDS, RESTRICTED_CARDS } from '../../data/banlist';
 import './AutoDeckWizard.css';
 
 interface AutoDeckWizardProps {

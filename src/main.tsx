@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
-import { DialogProvider } from './components/DialogContext'
+import { DialogProvider } from './components/UI/DialogContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
