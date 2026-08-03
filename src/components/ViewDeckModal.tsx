@@ -4,6 +4,7 @@ import type { SavedDeck } from './DeckList';
 import './ViewDeckModal.css';
 import { useDialog } from './DialogContext';
 import { DeckAnalyzerModal } from './DeckAnalyzerModal';
+import { LeaderMetaStats } from './LeaderMetaStats';
 
 interface ViewDeckModalProps {
   deck: SavedDeck;
@@ -84,13 +85,18 @@ export function ViewDeckModal({ deck, allCards, onClose, onEdit, onDelete, onCar
               if (!leaderId) return <div style={{color:'var(--text-muted)'}}>Nenhum Líder</div>;
               const leaderCard = allCards.find(c => c.card_set_id === leaderId);
               return (
-                <div className="view-deck-card leader-card-wrap" onClick={() => onCardClick(leaderCard)}>
-                  <img 
-                    src={leaderCard.card_image} 
-                    alt={leaderCard.card_name} 
-                    loading="lazy"
-                    onError={(e) => { (e.target as HTMLImageElement).src = '/icon.jpg'; }}
-                  />
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                  <div className="view-deck-card leader-card-wrap" onClick={() => onCardClick(leaderCard)}>
+                    <img 
+                      src={leaderCard.card_image} 
+                      alt={leaderCard.card_name} 
+                      loading="lazy"
+                      onError={(e) => { (e.target as HTMLImageElement).src = '/icon.jpg'; }}
+                    />
+                  </div>
+                  <div style={{ flex: '1 1 300px' }}>
+                    <LeaderMetaStats leaderCard={leaderCard} allCards={allCards} />
+                  </div>
                 </div>
               );
             })()}

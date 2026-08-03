@@ -1,0 +1,146 @@
+.meta-stats-container {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.meta-stats-container.loading {
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  color: var(--text-muted);
+  gap: 0.5rem;
+}
+
+.meta-stats-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--neon-purple);
+}
+
+.meta-stats-header h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.meta-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.meta-stat-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stat-value.positive {
+  color: var(--op-green);
+}
+
+.stat-value.negative {
+  color: var(--op-red);
+}
+
+.meta-matchups {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+}
+
+.meta-matchups-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.meta-matchups-header h5 {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.matchup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.matchup-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.matchup-name {
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.matchup-wr {
+  font-weight: 600;
+}
+
+.matchup-wr.positive {
+  color: var(--op-green);
+}
+
+.matchup-wr.negative {
+  color: var(--op-red);
+}
+
+.meta-footer {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+/* Spinner helper se já não existir no global */
+.spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--neon-purple);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

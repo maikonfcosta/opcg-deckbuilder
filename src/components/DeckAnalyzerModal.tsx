@@ -4,6 +4,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import ReactMarkdown from 'react-markdown';
 import { BANNED_CARDS, RESTRICTED_CARDS, BANNED_PAIRS } from '../data/banlist';
 import { useDialog } from './DialogContext';
+import { fetchLeaderMetaStats } from '../services/api';
 import './DeckAnalyzerModal.css';
 
 interface DeckAnalyzerModalProps {
@@ -60,10 +61,28 @@ export function DeckAnalyzerModal({ deck, allCards, onClose, onUpdateDeck }: Dec
       // Preparar a lista do deck
       const cardIds = Object.keys(deck.cards).filter(id => deck.cards[id] > 0);
       let deckListText = '';
+      let metaText = '';
       
       const leaderCard = allCards.find(c => c.card_type === 'Leader' && deck.cards[c.card_set_id] > 0);
       if (leaderCard) {
         deckListText += `Líder: ${leaderCard.card_name} (${leaderCard.card_set_id}) - Cor: ${leaderCard.card_color} - Efeito: ${leaderCard.card_text}\n\nCartas do Deck:\n`;
+        
+        try {
+          const meta = await fetchLeaderMetaStats(leaderCard.card_set_id);
+          if (meta && meta.win_rate !== null) {
+            metaText = `\nDADOS REAIS DO META (PONEGLYPH API):\n- Win Rate do Líder: ${(meta.win_rate * 100).toFixed(1)}%\n- Participação no Meta: ${(meta.deck_share * 100).toFixed(1)}%\n`;
+            if (meta.matchups && meta.matchups.length > 0) {
+              const top = meta.matchups.sort((a: any, b: any) => (b.wins + b.losses) - (a.wins + a.losses)).slice(0, 3);
+              metaText += `- Principais Matchups (Win Rate):\n`;
+              top.forEach((m: any) => {
+                const oppName = allCards.find(c => c.card_set_id === m.opponent_card_number)?.card_name || m.opponent_card_number;
+                metaText += `  * vs ${oppName}: ${m.win_rate ? (m.win_rate * 100).toFixed(1) : 'N/A'}%\n`;
+              });
+            }
+          }
+        } catch (e) {
+          console.warn("Could not fetch meta stats for prompt", e);
+        }
       } else {
         deckListText += `Cartas do Deck:\n`;
       }
@@ -80,6 +99,7 @@ Eu construí o seguinte deck:
 Nome do Deck: ${deck.name}
 
 ${deckListText}
+${metaText ? `\n${metaText}\nLeve esses dados estatísticos de Win Rate e Matchups em consideração para indicar as fraquezas e pontos fortes no meta atual.\n` : ''}
 
 Por favor, faça uma análise detalhada deste deck abordando obrigatoriamente os seguintes pontos:
 1. **Estratégia Principal:** Qual é a principal condição de vitória e como o deck deve jogar.

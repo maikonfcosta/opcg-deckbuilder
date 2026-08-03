@@ -83,17 +83,18 @@ function App() {
 
   // 1. Fetch Assíncrono dos Dados (Performance)
   useEffect(() => {
-    import('./services/api').then(({ fetchAllCards }) => {
-      fetchAllCards()
-        .then(data => {
-          setAllCards(data);
-          setIsLoading(false);
-        })
-        .catch(err => {
-          console.error("Erro ao carregar banco de dados:", err);
-          setIsLoading(false);
-        });
-    });
+    Promise.all([
+      import('./services/api').then(({ fetchAllCards }) => fetchAllCards()),
+      import('./data/banlist').then(({ initBanlist }) => initBanlist())
+    ])
+      .then(([data]) => {
+        setAllCards(data);
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.error("Erro ao carregar banco de dados ou banlist:", err);
+        setIsLoading(false);
+      });
   }, []);
 
   const dynamicSeries = useMemo(() => {
@@ -526,6 +527,7 @@ function App() {
         {activeTab === 'profile' ? (
           <ProfileView 
             onViewBanlist={() => setShowBanlistModal(true)}
+            totalCards={allCards.length}
           />
         ) : activeTab === 'leaks' ? (
           <LeaksFeed />
